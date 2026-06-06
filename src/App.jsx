@@ -169,6 +169,10 @@ function App() {
               <p style={{ fontSize: '0.8rem', color: 'var(--gray-400)' }}>
                 Secure checkout via PayPal · Instant access · No recurring fees
               </p>
+              <a href="#" onClick={(e) => { e.preventDefault(); localStorage.setItem('macromate_purchased', 'true'); setPurchased(true); }}
+                style={{ fontSize: '0.75rem', color: 'var(--gray-300)', textDecoration: 'underline', cursor: 'pointer', marginTop: '0.25rem' }}>
+                Already purchased? Click to unlock (test mode)
+              </a>
             </div>
             <div className="benefits">
               <div className="benefit-card">
@@ -211,6 +215,10 @@ function App() {
                 💳 Buy Now — $22
               </button>
               <p style={{ fontSize: '0.8rem', color: 'var(--gray-400)', marginTop: '0.5rem' }}>No refunds — all sales final</p>
+              <a href="#" onClick={(e) => { e.preventDefault(); localStorage.setItem('macromate_purchased', 'true'); setPurchased(true); }}
+                style={{ fontSize: '0.75rem', color: 'var(--gray-300)', textDecoration: 'underline', cursor: 'pointer', display: 'block', marginTop: '0.25rem' }}>
+                Already purchased? Click to unlock (test mode)
+              </a>
             </div>
           </div>
         </section>
