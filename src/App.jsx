@@ -137,7 +137,11 @@ function App() {
     setPlanData({ ...planData, mealsByDay: newMealsByDay, groceryList: Object.values(allMap).sort() })
   }
 
-  const handleDownloadPDF = () => { if (planRef.current) downloadPDF(planRef.current) }
+  const handleDownloadPDF = () => {
+    if (planData && targets) {
+      downloadPDF(planData, targets, form)
+    }
+  }
   const canProceed = form.age && form.weight
 
   // ===== PAYWALL LANDING =====

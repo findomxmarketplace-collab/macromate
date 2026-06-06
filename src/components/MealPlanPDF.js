@@ -1,42 +1,148 @@
 import { jsPDF } from 'jspdf'
-import html2canvas from 'html2canvas'
 
-export function downloadPDF(planElement) {
-  // Generate PDF from the plan element
-  html2canvas(planElement, {
-    scale: 2,
-    useCORS: true,
-    logging: false,
-    backgroundColor: '#ffffff',
-    height: planElement.scrollHeight,
-    windowHeight: planElement.scrollHeight,
-  }).then((canvas) => {
-    const imgData = canvas.toDataURL('image/png')
-    const pdf = new jsPDF('p', 'mm', 'a4')
-    const pdfWidth = pdf.internal.pageSize.getWidth()
-    const pdfHeight = pdf.internal.pageSize.getHeight()
-    
-    const imgWidth = pdfWidth
-    const imgHeight = (canvas.height * imgWidth) / canvas.width
-    
-    let heightLeft = imgHeight
-    let position = 0
-    
-    // Add first page
-    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
-    heightLeft -= pdfHeight
-    
-    // Add additional pages if content overflows
-    while (heightLeft > 0) {
-      position = position - pdfHeight
+const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+export function downloadPDF(planData, targets, form) {
+  const pdf = new jsPDF('p', 'mm', 'a4')
+  const pw = 190 // page width - margins
+  const ml = 10 // left margin
+  let y = 15 // current y position
+
+  function addSection(title, content, fontSize = 10) {
+    // Check if we need a new page
+    if (y > 250) {
       pdf.addPage()
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
-      heightLeft -= pdfHeight
+      y = 15
     }
+    pdf.setFontSize(14)
+    pdf.setFont(undefined, 'bold')
+    pdf.text(title, ml, y)
+    y += 7
     
-    pdf.save('MacroMate_Meal_Plan.pdf')
+    pdf.setFontSize(fontSize)
+    pdf.setFont(undefined, 'normal')
+    
+    if (typeof content === 'string') {
+      const lines = pdf.splitTextToSize(content, pw)
+      lines.forEach(line => {
+        if (y > 275) {
+          pdf.addPage()
+          y = 15
+        }
+        pdf.text(line, ml, y)
+        y += 5
+      })
+    }
+    y += 3
+  }
+
+  function addMeal(meal, yPos) {
+    const lines = [`${meal.name} — ${meal.calories} cal | P${meal.protein}g C${meal.carbs}g F${meal.fat}g`]
+    lines.push(`  ${meal.instructions}`)
+    lines.push(`  Ingredients: ${meal.ingredients.join(', ')}`)
+    lines.forEach(line => {
+      if (yPos > 275) {
+        pdf.addPage()
+        yPos = 15
+      }
+      const wrapped = pdf.splitTextToSize(line, pw)
+      wrapped.forEach(w => {
+        if (yPos > 275) {
+          pdf.addPage()
+          yPos = 15
+        }
+        pdf.text(w, ml, yPos)
+        yPos += 4.5
+      })
+    })
+    return yPos + 3
+  }
+
+  // === TITLE PAGE ===
+  pdf.setFontSize(24)
+  pdf.setFont(undefined, 'bold')
+  pdf.text('MacroMate', ml, y)
+  y += 10
+  pdf.setFontSize(16)
+  pdf.setFont(undefined, 'normal')
+  pdf.text('Your Personalized 7-Day Meal Plan', ml, y)
+  y += 8
+  pdf.setFontSize(10)
+  pdf.text(`Generated for: ${form.age}yr ${form.sex} · ${form.weight}${form.weightUnit} · Goal: ${form.goal} · Diet: ${form.dietType}`, ml, y)
+  y += 5
+  pdf.text(`Meals per day: ${form.mealsPerDay} · ${form.sweetTooth ? 'Includes desserts' : 'No desserts'} · ${parseInt(form.people) > 1 ? `For ${form.people} people` : 'Single serving'}`, ml, y)
+  y += 5
+  pdf.text(`© MacroMate — Not for Resale`, ml, y)
+  y += 15
+
+  // === DAILY TARGETS ===
+  pdf.setFontSize(18)
+  pdf.setFont(undefined, 'bold')
+  pdf.text('Your Daily Nutrition Targets', ml, y)
+  y += 10
+  pdf.setFontSize(12)
+  pdf.setFont(undefined, 'normal')
+  pdf.text(`Calories: ${targets.targetCalories}  |  Protein: ${targets.proteinG}g  |  Carbs: ${targets.carbsG}g  |  Fat: ${targets.fatG}g`, ml, y)
+  y += 12
+
+  // === 7-DAY MEAL PLAN ===
+  planData.mealsByDay.forEach((day, idx) => {
+    pdf.setFontSize(16)
+    pdf.setFont(undefined, 'bold')
+    const dayLabel = `Day ${day.day} — ${DAYS[idx]}`
+    pdf.text(dayLabel, ml, y)
+    y += 8
+    
+    const totals = `Daily Totals: ${day.totals.calories} cal | P${day.totals.protein}g C${day.totals.carbs}g F${day.totals.fat}g`
+    pdf.setFontSize(9)
+    pdf.setFont(undefined, 'italic')
+    pdf.text(totals, ml, y)
+    y += 7
+    
+    pdf.setFont(undefined, 'normal')
+    day.meals.forEach(meal => {
+      y = addMeal(meal, y)
+    })
+    
+    y += 5
+    if (y > 260) {
+      pdf.addPage()
+      y = 15
+    }
   })
 
+  // === GROCERY LIST ===
+  if (y > 240) {
+    pdf.addPage()
+    y = 15
+  }
+  pdf.addPage()
+  y = 15
+  pdf.setFontSize(18)
+  pdf.setFont(undefined, 'bold')
+  pdf.text('7-Day Grocery List', ml, y)
+  y += 10
+  pdf.setFontSize(9)
+  pdf.setFont(undefined, 'normal')
+
+  const multiplier = parseInt(form.people) || 1
+  planData.groceryList.forEach((item, i) => {
+    if (y > 275) {
+      pdf.addPage()
+      y = 15
+    }
+    const scaled = multiplier > 1 ? item.replace(/^(\d+)\s*/, (_, n) => `${parseInt(n) * multiplier} `) : item
+    pdf.text(`☐  ${scaled}`, ml, y)
+    y += 5
+  })
+
+  // === FOOTER ===
+  y = Math.max(y + 10, 280)
+  pdf.setFontSize(8)
+  pdf.setFont(undefined, 'italic')
+  pdf.text('Generated by MacroMate — © MacroMate. Not for Resale.', ml, y)
+
+  pdf.save('MacroMate_Meal_Plan.pdf')
   return true
 }
 
