@@ -632,3 +632,212 @@
     width: 40px;
   }
 }
+
+/* ===== Quote Card ===== */
+.quote-card {
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, var(--green-50), #fff);
+  border: 1px solid var(--green-200);
+  border-radius: var(--radius);
+  text-align: center;
+}
+
+.quote-text {
+  font-size: 1rem;
+  font-style: italic;
+  color: var(--gray-700);
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+.quote-author {
+  font-size: 0.85rem;
+  color: var(--gray-400);
+  margin-top: 0.5rem;
+}
+
+/* ===== Macro Chart ===== */
+.macro-chart-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.macro-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--gray-600);
+  font-weight: 500;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.day-micro-chart {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 1.5rem 0.75rem;
+}
+
+/* ===== Calorie Adjuster ===== */
+.cal-adjuster {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--gray-50);
+  border-radius: var(--radius-sm);
+}
+
+/* ===== Meal Tags ===== */
+.meal-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+.meal-tags {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.cost-badge {
+  font-size: 0.8rem;
+}
+
+.prep-badge {
+  font-size: 0.7rem;
+  color: var(--gray-500);
+  background: var(--gray-100);
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+}
+
+/* ===== Supermarket Suggestions ===== */
+.supermarket-card {
+  padding: 1.25rem 1.5rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+}
+
+.supermarket-card h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--gray-800);
+  margin-bottom: 0.75rem;
+}
+
+.supermarket-grid {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.supermarket-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: #fff;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  flex: 1;
+  min-width: 150px;
+}
+
+.supermarket-name {
+  font-weight: 700;
+  color: var(--gray-800);
+  font-size: 0.95rem;
+}
+
+.supermarket-badge {
+  font-size: 0.75rem;
+  color: var(--green-700);
+  background: var(--green-100);
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+}
+
+.supermarket-note {
+  font-size: 0.8rem;
+  color: var(--gray-400);
+  margin-top: 0.75rem;
+}
+
+/* ===== Toggle Label ===== */
+.toggle-label {
+  display: flex !important;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--gray-700);
+  margin-bottom: 0;
+}
+
+/* ===== Section Subtitle ===== */
+.section-subtitle {
+  font-size: 0.85rem;
+  color: var(--gray-400);
+  margin-top: -1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* ===== Price Tag ===== */
+.price-tag {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.price-amount {
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: var(--green-700);
+  line-height: 1;
+}
+
+.price-label {
+  font-size: 0.85rem;
+  color: var(--gray-400);
+  font-weight: 500;
+}
+
+/* ===== Feature Checklist ===== */
+.feature-checklist {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+.feature-item {
+  font-size: 0.95rem;
+  color: var(--gray-700);
+  padding: 0.5rem;
+}

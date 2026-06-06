@@ -2,15 +2,6 @@ import { jsPDF } from 'jspdf'
 import html2canvas from 'html2canvas'
 
 export function downloadPDF(planElement) {
-  const licenseKey = prompt('Enter your license key to download the PDF:')
-  if (!licenseKey || licenseKey.trim() === '') {
-    alert('A valid license key is required to download the meal plan.')
-    return false
-  }
-
-  // Any non-empty string is accepted
-  alert('License key accepted! Generating your PDF...')
-
   // Generate PDF from the plan element
   html2canvas(planElement, {
     scale: 2,
