@@ -65,17 +65,11 @@ function App() {
 
   const updateForm = (k, v) => setForm(p => ({ ...p, [k]: v }))
 
-  // Simulate purchase — replace with real PayPal link
+  const PAYPAL_URL = "https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=85X6ZA2CZDYH4"
+
   const handlePurchase = () => {
-    const confirmed = window.confirm(
-      'This is where a PayPal button would redirect you.\n\n' +
-      'For demo purposes, click OK to simulate purchase.\n\n' +
-      'To set up real payments:\n' +
-      '1. Create a PayPal buy button at https://www.paypal.com/buttons\n' +
-      '2. Set the price to $22.00\n' +
-      '3. Replace the link in the code'
-    )
-    if (confirmed) {
+    window.open(PAYPAL_URL, '_blank')
+    if (window.confirm('After completing your $22 payment on PayPal, click OK to unlock MacroMate instantly.\n\nAlready paid? Click OK to get started!')) {
       localStorage.setItem('macromate_purchased', 'true')
       setPurchased(true)
     }
@@ -216,7 +210,7 @@ function App() {
               <button className="btn btn-primary btn-lg" onClick={handlePurchase}>
                 💳 Buy Now — $22
               </button>
-              <p style={{ fontSize: '0.8rem', color: 'var(--gray-400)', marginTop: '0.5rem' }}>30-day money-back guarantee</p>
+              <p style={{ fontSize: '0.8rem', color: 'var(--gray-400)', marginTop: '0.5rem' }}>No refunds — all sales final</p>
             </div>
           </div>
         </section>
