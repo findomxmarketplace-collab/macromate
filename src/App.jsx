@@ -711,22 +711,22 @@ function App() {
             <h2>💰 Save on Your Groceries</h2>
             <p className="grocery-note">Save money on your meal plan ingredients with these money-saving resources.</p>
             <div className="discount-grid">
-              <a href="https://www.istock.com" target="_blank" rel="noopener noreferrer" className="discount-item">
+              <a href="https://www.offers.com/grocery-coupons/" target="_blank" rel="noopener noreferrer" className="discount-item">
                 <span className="discount-icon">🏪</span>
-                <div><strong>Check Supermarket Weekly Ads</strong><p className="discount-note">Check local flyers for deals on produce, meat, and pantry staples.</p></div>
+                <div><strong>Check Supermarket Weekly Ads</strong><p className="discount-note">Find grocery coupons and weekly deals at stores near you on Offers.com.</p></div>
               </a>
-              <a href="https://www.rakuten.com" target="_blank" rel="noopener noreferrer" className="discount-item">
+              <a href="https://ibotta.com" target="_blank" rel="noopener noreferrer" className="discount-item">
                 <span className="discount-icon">💵</span>
-                <div><strong>Cashback Apps</strong><p className="discount-note">Rakuten, Ibotta, and Fetch Rewards offer cashback on grocery purchases.</p></div>
+                <div><strong>Cashback Apps</strong><p className="discount-note">Ibotta, Rakuten, and Fetch Rewards offer cashback on grocery purchases.</p></div>
               </a>
               <a href="https://www.toogoodtogo.com" target="_blank" rel="noopener noreferrer" className="discount-item">
                 <span className="discount-icon">♻️</span>
                 <div><strong>Too Good To Go</strong><p className="discount-note">Rescue surplus food from local stores at a fraction of the price.</p></div>
               </a>
-              <div className="discount-item">
+              <a href="https://www.thekrazycouponlady.com" target="_blank" rel="noopener noreferrer" className="discount-item">
                 <span className="discount-icon">📝</span>
-                <div><strong>Buy in Bulk, Freeze What You Can</strong><p className="discount-note">Batch cook and freeze meals to reduce waste and save money on ingredients.</p></div>
-              </div>
+                <div><strong>Coupon Matchups & Deals</strong><p className="discount-note">The Krazy Coupon Lady helps you stack coupons and find the best grocery deals.</p></div>
+              </a>
             </div>
           </div>
 
