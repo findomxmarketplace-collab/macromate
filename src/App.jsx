@@ -55,7 +55,7 @@ function App() {
     age: '', sex: 'Male', weight: '', weightUnit: 'lbs', goal: 'Lose Fat',
     dietType: 'No restrictions', dislikedFoods: '', allergies: '',
     mealsPerDay: '3', sweetTooth: false, freezerFriendly: false, weeklyBudget: '',
-    people: '1', planDuration: '7', cookingMethod: 'No preference',
+    people: '1', planDuration: '7', cookingMethods: [],
   })
   const [peopleData, setPeopleData] = useState([])
   const [planData, setPlanData] = useState(null)
@@ -66,7 +66,6 @@ function App() {
   const planRef = useRef(null)
 
   const updateForm = (k, v) => {
-    // When people count changes, update peopleData array length
     if (k === 'people') {
       const count = parseInt(v)
       setForm(p => ({ ...p, people: v }))
@@ -74,6 +73,15 @@ function App() {
         const arr = [...prev]
         while (arr.length < count - 1) arr.push({ age: '', sex: 'Male', weight: '' })
         return arr.slice(0, count - 1)
+      })
+    } else if (k === 'cookingMethods') {
+      // Toggle cooking method in the array
+      setForm(p => {
+        const current = [...(p.cookingMethods || [])]
+        const idx = current.indexOf(v)
+        if (idx >= 0) current.splice(idx, 1)
+        else current.push(v)
+        return { ...p, cookingMethods: current }
       })
     } else {
       setForm(p => ({ ...p, [k]: v }))
@@ -106,7 +114,7 @@ function App() {
         allergies: form.allergies, mealsPerDay: parseInt(form.mealsPerDay),
         sweetTooth: form.sweetTooth, freezerFriendly: form.freezerFriendly,
         weeklyBudget: form.weeklyBudget, people: form.people,
-        planDuration: parseInt(form.planDuration) || 7, cookingMethod: form.cookingMethod,
+        planDuration: parseInt(form.planDuration) || 7, cookingMethods: form.cookingMethods || [],
       }
       
       // Calculate targets for each person separately (not averaged)
@@ -146,7 +154,7 @@ function App() {
       allergies: form.allergies, mealsPerDay: parseInt(form.mealsPerDay),
       sweetTooth: form.sweetTooth, freezerFriendly: form.freezerFriendly,
       weeklyBudget: form.weeklyBudget, people: form.people,
-      planDuration: parseInt(form.planDuration) || 7, cookingMethod: form.cookingMethod,
+      planDuration: parseInt(form.planDuration) || 7, cookingMethods: form.cookingMethods || [],
     }
     
     // Recalculate with adjustment using same average approach
@@ -433,17 +441,24 @@ function App() {
                   </select>
                 </div>
                 <div className="input-group">
-                  <label>Preferred Cooking Method</label>
-                  <select value={form.cookingMethod} onChange={e => updateForm('cookingMethod', e.target.value)}>
-                    <option value="No preference">No preference</option>
-                    <option value="Stove-Top (Quick)">Stove-Top / Quick</option>
-                    <option value="Oven-Baked">Oven-Baked / Roasted</option>
-                    <option value="BBQ & Grilling">BBQ & Grilling</option>
-                    <option value="One-Pan / Sheet Pan">One-Pan / Sheet Pan</option>
-                    <option value="Slow Cooker / Casserole">Slow Cooker / Casserole</option>
-                    <option value="No-Cook / Assembly">No-Cook / Assembly (Salads, Smoothies)</option>
-                  </select>
-                  <span className="hint">We'll prioritize meals that match your preferred method.</span>
+                  <label>Cooking Methods (pick any that apply)</label>
+                  <div className="cooking-checkboxes">
+                    {['Stove-Top (Quick)', 'Oven-Baked', 'BBQ & Grilling', 'One-Pan / Sheet Pan', 'Slow Cooker / Casserole', 'No-Cook / Assembly'].map(method => (
+                      <label key={method} className="cooking-checkbox-label" style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+                        padding: '0.4rem 0.75rem', border: `2px solid ${(form.cookingMethods || []).includes(method) ? 'var(--green-500)' : 'var(--gray-200)'}`,
+                        borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '0.85rem',
+                        background: (form.cookingMethods || []).includes(method) ? 'var(--green-50)' : '#fff',
+                        transition: 'all 0.15s', marginBottom: '0.35rem'
+                      }}>
+                        <input type="checkbox" checked={(form.cookingMethods || []).includes(method)}
+                          onChange={() => updateForm('cookingMethods', method)}
+                          style={{ accentColor: 'var(--green-600)', width: 'auto' }} />
+                        <span>{method}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <span className="hint" style={{ marginTop: '0.5rem', display: 'block' }}>Pick none for all methods, or select your favorites for targeted meal plans.</span>
                 </div>
                 <div className="input-group">
                   <label>Meals Per Day</label>
@@ -555,7 +570,7 @@ function App() {
                 <div className="target-item"><div className="target-value">{targets.fatG}g</div><div className="target-label">Fat</div></div>
               </div>
             )}
-            {form.freezerFriendly && <p style={{ fontSize: '0.85rem', color: 'var(--green-700)', fontWeight: 500 }}>🧊 Freezer-friendly mode active — meals selected for batch cooking & freezing</p>}
+            {form.freezerFriendly && <p style={{ fontSize: '0.85rem', color: 'var(--green-700)', fontWeight: 500 }}>���� Freezer-friendly mode active — meals selected for batch cooking & freezing</p>}
             <div className="macro-chart-container">
               <MacroChart protein={targets.proteinG} carbs={targets.carbsG} fat={targets.fatG} />
               <div className="macro-legend">
