@@ -57,11 +57,40 @@ function isFreezerFriendly(meal) {
   return freezerKeywords.some(kw => text.includes(kw))
 }
 
-function pickRandom(arr, recentList, disliked, maxRecent = 5, preferFreezer = false) {
+// Cooking method detection keywords
+const cookingKeywords = {
+  'BBQ & Grilling': ['grill', 'bbq', 'skewer', 'kebab', 'char', 'sear'],
+  'Oven-Baked': ['bake', 'roast', 'sheet pan', 'oven', '400°f', '375°f', '350°f'],
+  'Stove-Top (Quick)': ['fry', 'sauté', 'pan', 'stir', 'boil', 'cook', 'scramble', 'poach'],
+  'One-Pan / Sheet Pan': ['sheet pan', 'one pan', 'sheetpan', 'tray bake'],
+  'No-Cook / Assembly': ['smoothie', 'salad', 'wrap', 'parfait', 'bowl', 'blend', 'shake', 'yogurt', 'toast', 'no-cook', 'assemble'],
+  'Slow Cooker / Casserole': ['casserole', 'slow cook', 'braise', 'stew', 'simmer', 'chili', 'soup'],
+}
+
+export function detectCookingMethod(meal) {
+  const text = (meal.name + ' ' + meal.instructions).toLowerCase()
+  for (const [method, keywords] of Object.entries(cookingKeywords)) {
+    if (keywords.some(kw => text.includes(kw))) return method
+  }
+  return 'Stove-Top (Quick)'
+}
+
+function matchesCookingMethod(meal, method) {
+  if (!method || method === 'No preference') return true
+  return detectCookingMethod(meal) === method
+}
+
+function pickRandom(arr, recentList, disliked, maxRecent = 5, preferFreezer = false, cookingMethod = '') {
   let pool = arr.filter(m => {
     if (recentList.includes(m.name)) return false
     return !m.ingredients.some(ing => disliked.some(d => ing.toLowerCase().includes(d)))
   })
+
+  // Filter by cooking method if specified
+  if (cookingMethod && cookingMethod !== 'No preference') {
+    const methodMatch = pool.filter(m => matchesCookingMethod(m, cookingMethod))
+    if (methodMatch.length > 0) pool = methodMatch
+  }
 
   if (preferFreezer) {
     const freezerMeals = pool.filter(m => isFreezerFriendly(m))
@@ -80,7 +109,7 @@ function pickRandom(arr, recentList, disliked, maxRecent = 5, preferFreezer = fa
 }
 
 export function generateMeals(mealDb, dessertsDb, preferences, targets, calAdjust = 0) {
-  const { dietType, dislikedFoods, mealsPerDay, sweetTooth, allergies, freezerFriendly, planDuration } = preferences
+  const { dietType, dislikedFoods, mealsPerDay, sweetTooth, allergies, freezerFriendly, planDuration, cookingMethod } = preferences
   const daysToGenerate = planDuration || 7
   const diet = mealDb[dietType] || mealDb['No restrictions']
 

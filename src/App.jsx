@@ -55,7 +55,7 @@ function App() {
     age: '', sex: 'Male', weight: '', weightUnit: 'lbs', goal: 'Lose Fat',
     dietType: 'No restrictions', dislikedFoods: '', allergies: '',
     mealsPerDay: '3', sweetTooth: false, freezerFriendly: false, weeklyBudget: '',
-    people: '1', planDuration: '7',
+    people: '1', planDuration: '7', cookingMethod: 'No preference',
   })
   const [peopleData, setPeopleData] = useState([])
   const [planData, setPlanData] = useState(null)
@@ -105,7 +105,7 @@ function App() {
         allergies: form.allergies, mealsPerDay: parseInt(form.mealsPerDay),
         sweetTooth: form.sweetTooth, freezerFriendly: form.freezerFriendly,
         weeklyBudget: form.weeklyBudget, people: form.people,
-        planDuration: parseInt(form.planDuration) || 7,
+        planDuration: parseInt(form.planDuration) || 7, cookingMethod: form.cookingMethod,
       }
       
       // Calculate targets for primary person
@@ -160,7 +160,7 @@ function App() {
       allergies: form.allergies, mealsPerDay: parseInt(form.mealsPerDay),
       sweetTooth: form.sweetTooth, freezerFriendly: form.freezerFriendly,
       weeklyBudget: form.weeklyBudget, people: form.people,
-      planDuration: parseInt(form.planDuration) || 7,
+      planDuration: parseInt(form.planDuration) || 7, cookingMethod: form.cookingMethod,
     }
     
     // Recalculate with adjustment using same average approach
@@ -447,6 +447,19 @@ function App() {
                   </select>
                 </div>
                 <div className="input-group">
+                  <label>Preferred Cooking Method</label>
+                  <select value={form.cookingMethod} onChange={e => updateForm('cookingMethod', e.target.value)}>
+                    <option value="No preference">No preference</option>
+                    <option value="Stove-Top (Quick)">Stove-Top / Quick</option>
+                    <option value="Oven-Baked">Oven-Baked / Roasted</option>
+                    <option value="BBQ & Grilling">BBQ & Grilling</option>
+                    <option value="One-Pan / Sheet Pan">One-Pan / Sheet Pan</option>
+                    <option value="Slow Cooker / Casserole">Slow Cooker / Casserole</option>
+                    <option value="No-Cook / Assembly">No-Cook / Assembly (Salads, Smoothies)</option>
+                  </select>
+                  <span className="hint">We'll prioritize meals that match your preferred method.</span>
+                </div>
+                <div className="input-group">
                   <label>Meals Per Day</label>
                   <select value={form.mealsPerDay} onChange={e => updateForm('mealsPerDay', e.target.value)}>
                     <option value="2">2 meals</option>
@@ -623,6 +636,29 @@ function App() {
                   <label htmlFor={`grocery-${idx}`}>{item}</label>
                 </div>
               ))}
+            </div>
+          </div>
+
+          <div className="discount-card card fade-in-up">
+            <h2>💰 Save on Your Groceries</h2>
+            <p className="grocery-note">Save money on your meal plan ingredients with these money-saving resources.</p>
+            <div className="discount-grid">
+              <a href="https://www.istock.com" target="_blank" rel="noopener noreferrer" className="discount-item">
+                <span className="discount-icon">🏪</span>
+                <div><strong>Check Supermarket Weekly Ads</strong><p className="discount-note">Check local flyers for deals on produce, meat, and pantry staples.</p></div>
+              </a>
+              <a href="https://www.rakuten.com" target="_blank" rel="noopener noreferrer" className="discount-item">
+                <span className="discount-icon">💵</span>
+                <div><strong>Cashback Apps</strong><p className="discount-note">Rakuten, Ibotta, and Fetch Rewards offer cashback on grocery purchases.</p></div>
+              </a>
+              <a href="https://www.toogoodtogo.com" target="_blank" rel="noopener noreferrer" className="discount-item">
+                <span className="discount-icon">♻️</span>
+                <div><strong>Too Good To Go</strong><p className="discount-note">Rescue surplus food from local stores at a fraction of the price.</p></div>
+              </a>
+              <div className="discount-item">
+                <span className="discount-icon">📝</span>
+                <div><strong>Buy in Bulk, Freeze What You Can</strong><p className="discount-note">Batch cook and freeze meals to reduce waste and save money on ingredients.</p></div>
+              </div>
             </div>
           </div>
 
