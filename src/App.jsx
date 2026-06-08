@@ -71,7 +71,7 @@ function App() {
       setForm(p => ({ ...p, people: v }))
       setPeopleData(prev => {
         const arr = [...prev]
-        while (arr.length < count - 1) arr.push({ age: '', sex: 'Male', weight: '' })
+        while (arr.length < count - 1) arr.push({ age: '', sex: 'Male', weight: '', goal: 'Lose Fat' })
         return arr.slice(0, count - 1)
       })
     } else if (k === 'cookingMethods') {
@@ -120,11 +120,14 @@ function App() {
       // Calculate targets for each person separately (not averaged)
       const personList = [
         { name: 'You', age: parseInt(form.age), sex: form.sex, weight: parseFloat(form.weight), weightUnit: form.weightUnit, goal: form.goal },
-        ...peopleData.filter(p => p.age && p.weight).map((p, i) => ({
-          name: `Person ${i + 2}`,
-          age: parseInt(p.age), sex: p.sex, weight: parseFloat(p.weight),
-          weightUnit: form.weightUnit, goal: form.goal,
-        }))
+        ...peopleData.filter(p => p.age && p.weight).map((p, i) => {
+          const pd = peopleData[i] || {}
+          return {
+            name: pd.goal === form.goal ? `Person ${i + 2}` : `Person ${i + 2} (${pd.goal || form.goal})`,
+            age: parseInt(p.age), sex: p.sex, weight: parseFloat(p.weight),
+            weightUnit: form.weightUnit, goal: pd.goal || form.goal,
+          }
+        })
       ]
       
       const calcTargets = personList.map(p => {
@@ -449,6 +452,14 @@ function App() {
                       <div style={{ flex: '1 1 100px' }}>
                         <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--gray-700)' }}>Weight</label>
                         <input type="number" placeholder="e.g. 150" value={person.weight || ''} onChange={e => updatePerson(idx, 'weight', e.target.value)} min="30" max="700" style={{ width: '100%' }} />
+                      </div>
+                      <div style={{ flex: '1 1 140px' }}>
+                        <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--gray-700)' }}>Goal</label>
+                        <select value={person.goal || 'Lose Fat'} onChange={e => updatePerson(idx, 'goal', e.target.value)} style={{ width: '100%' }}>
+                          <option value="Lose Fat">Lose Fat</option>
+                          <option value="Build Muscle">Build Muscle</option>
+                          <option value="Maintain Weight">Maintain Weight</option>
+                        </select>
                       </div>
                     </div>
                   </div>
