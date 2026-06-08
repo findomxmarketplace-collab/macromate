@@ -248,10 +248,58 @@ function App() {
               </div>
             </div>
           </div>
-        </section>
-        <section className="how-it-works">
-          <div className="container">
-            <h2>What You Get</h2>
+                    </section>
+
+                    {/* Sample meal preview on paywall page */}
+                    <section className="sample-preview">
+                      <div className="container">
+                        <h2>👀 See What You'll Get — A Sample Day</h2>
+                        <p className="form-desc" style={{ textAlign: 'center', maxWidth: '600px', margin: '0 auto 2rem' }}>
+                          Here's one day from a typical 7-day personalized meal plan. Your actual plan will be tailored to your age, weight, goal, diet, and preferences.
+                        </p>
+                        <div className="sample-day-card card">
+                          <div className="sample-day-header">
+                            <span className="day-name">Sample Day</span>
+                            <div className="day-totals">
+                              <span className="day-cal">~1,950 cal</span>
+                              <span className="day-macro">P 140g</span>
+                              <span className="day-macro">C 220g</span>
+                              <span className="day-macro">F 55g</span>
+                            </div>
+                          </div>
+                          <div className="sample-meals">
+                            <div className="sample-meal">
+                              <span className="sample-slot">🌅 Breakfast</span>
+                              <strong>Scrambled Eggs with Avocado Toast</strong>
+                              <span className="sample-macros">420 cal · P24g C34g F26g</span>
+                            </div>
+                            <div className="sample-meal">
+                              <span className="sample-slot">☀️ Lunch</span>
+                              <strong>Grilled Chicken Salad</strong>
+                              <span className="sample-macros">490 cal · P42g C12g F18g</span>
+                            </div>
+                            <div className="sample-meal">
+                              <span className="sample-slot">🌙 Dinner</span>
+                              <strong>Lemon Herb Chicken with Quinoa & Broccoli</strong>
+                              <span className="sample-macros">540 cal · P40g C34g F20g</span>
+                            </div>
+                            <div className="sample-meal">
+                              <span className="sample-slot">🍎 Snack</span>
+                              <strong>Greek Yogurt & Berries</strong>
+                              <span className="sample-macros">180 cal · P16g C22g F4g</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+                          <button className="btn btn-primary btn-lg" onClick={handlePurchase}>
+                            💳 Get Your Personalized Plan — $22
+                          </button>
+                        </div>
+                      </div>
+                    </section>
+                    <section className="how-it-works">
+                    <div className="container">
+                      <h2>What You Get</h2>
             <div className="feature-checklist">
               <div className="feature-item">✅ Personalized 7-day meal plan with exact macros</div>
               <div className="feature-item">✅ Breakfast, lunch, dinner + snacks & desserts</div>

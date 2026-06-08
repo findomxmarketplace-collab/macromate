@@ -898,3 +898,71 @@
   color: var(--gray-500);
   line-height: 1.4;
 }
+
+/* ===== Sample Preview ===== */
+.sample-preview {
+  padding: 4rem 0;
+  background: var(--gray-50);
+  text-align: center;
+}
+
+.sample-preview h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--gray-800);
+  margin-bottom: 0.75rem;
+}
+
+.sample-day-card {
+  max-width: 550px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+.sample-day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: var(--green-50);
+  border-bottom: 1px solid var(--green-100);
+}
+
+.sample-day-header .day-name {
+  font-weight: 700;
+  color: var(--gray-800);
+}
+
+.sample-meals {
+  padding: 0.75rem 1.5rem;
+}
+
+.sample-meal {
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--gray-100);
+  text-align: left;
+}
+
+.sample-meal:last-child {
+  border-bottom: none;
+}
+
+.sample-slot {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--green-700);
+  margin-bottom: 0.15rem;
+}
+
+.sample-meal strong {
+  font-size: 0.95rem;
+  color: var(--gray-800);
+}
+
+.sample-macros {
+  font-size: 0.8rem;
+  color: var(--gray-500);
+  margin-top: 0.15rem;
+}
