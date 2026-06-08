@@ -58,13 +58,25 @@ function isFreezerFriendly(meal) {
 }
 
 // Cooking method detection keywords
+// Order matters: methods are checked top-down. When user picks a method,
+// we also include related methods to ensure good meal selection.
 const cookingKeywords = {
-  'BBQ & Grilling': ['grill', 'bbq', 'skewer', 'kebab', 'char', 'sear', 'charcoal', 'barbeque', 'barbecue'],
+  'Slow Cooker / Casserole': ['casserole', 'slow cook', 'braise', 'stew', 'chili', 'soup', 'bake at', 'roast', 'simmer', 'oven', 'baked', 'roasted', 'sweet potato'],
   'Oven-Baked': ['bake', 'roast', 'sheet pan', 'oven', '400°f', '375°f', '350°f', '425°f', 'baked', 'roasted'],
-  'Stove-Top (Quick)': ['fry', 'sauté', 'pan', 'stir', 'boil', 'cook', 'scramble', 'poach', 'simmer', 'pan-fry', 'sear', 'stove', 'skillet', 'wok'],
+  'BBQ & Grilling': ['grill', 'bbq', 'skewer', 'kebab', 'char', 'sear', 'charcoal', 'barbeque', 'barbecue'],
+  'Stove-Top (Quick)': ['fry', 'sauté', 'pan', 'stir', 'boil', 'cook', 'scramble', 'poach', 'pan-fry', 'sear', 'stove', 'skillet', 'wok', 'heat', 'simmer'],
   'One-Pan / Sheet Pan': ['sheet pan', 'one pan', 'sheetpan', 'tray bake', 'one-pan'],
   'No-Cook / Assembly': ['smoothie', 'salad', 'wrap', 'parfait', 'bowl', 'blend', 'shake', 'yogurt', 'toast', 'no-cook', 'assemble', 'layer', 'dip', 'stick'],
-  'Slow Cooker / Casserole': ['casserole', 'slow cook', 'braise', 'stew', 'chili', 'soup', 'bake at', 'roast', 'simmer 20', 'simmer 15', 'simmer 30', 'oven', 'sweet potato baked'],
+}
+
+// Related cooking method groups (when one is selected, include these too)
+const methodGroups = {
+  'Slow Cooker / Casserole': ['Oven-Baked', 'Slow Cooker / Casserole'],
+  'Oven-Baked': ['Oven-Baked', 'Slow Cooker / Casserole'],
+  'BBQ & Grilling': ['BBQ & Grilling'],
+  'Stove-Top (Quick)': ['Stove-Top (Quick)', 'One-Pan / Sheet Pan'],
+  'One-Pan / Sheet Pan': ['One-Pan / Sheet Pan', 'Stove-Top (Quick)'],
+  'No-Cook / Assembly': ['No-Cook / Assembly'],
 }
 
 export function detectCookingMethod(meal) {
@@ -77,7 +89,9 @@ export function detectCookingMethod(meal) {
 
 function matchesCookingMethod(meal, method) {
   if (!method || method === 'No preference') return true
-  return detectCookingMethod(meal) === method
+  const mealMethod = detectCookingMethod(meal)
+  const group = methodGroups[method] || [method]
+  return group.includes(mealMethod)
 }
 
 function pickRandom(arr, recentList, disliked, maxRecent = 5, preferFreezer = false, cookingMethod = '') {
@@ -89,13 +103,8 @@ function pickRandom(arr, recentList, disliked, maxRecent = 5, preferFreezer = fa
   // Filter by cooking method if specified
   if (cookingMethod && cookingMethod !== 'No preference') {
     const methodMatch = pool.filter(m => matchesCookingMethod(m, cookingMethod))
-    if (methodMatch.length > 0) {
-      pool = methodMatch
-    } else {
-      // No exact matches — try relaxing: show all but tag them differently
-      // (returns original pool with a note that method couldn't be matched)
-      pool._noMethodMatch = true
-    }
+    if (methodMatch.length > 0) pool = methodMatch
+    // If no matches found, fall through with original pool (all meals)
   }
 
   if (preferFreezer) {
