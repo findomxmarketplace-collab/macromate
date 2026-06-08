@@ -61,6 +61,7 @@ function App() {
   const [planData, setPlanData] = useState(null)
   const [generating, setGenerating] = useState(false)
   const [targets, setTargets] = useState(null)
+  const [allPersonTargets, setAllPersonTargets] = useState([])
   const [calAdjust, setCalAdjust] = useState(0)
   const planRef = useRef(null)
 
@@ -108,43 +109,28 @@ function App() {
         planDuration: parseInt(form.planDuration) || 7, cookingMethod: form.cookingMethod,
       }
       
-      // Calculate targets for primary person
-      const primaryTargets = calculateTargets({
-        age: parseInt(form.age), sex: form.sex, weight: parseFloat(form.weight),
-        weightUnit: form.weightUnit, goal: form.goal, calAdjust: 0,
+      // Calculate targets for each person separately (not averaged)
+      const personList = [
+        { name: 'You', age: parseInt(form.age), sex: form.sex, weight: parseFloat(form.weight), weightUnit: form.weightUnit, goal: form.goal },
+        ...peopleData.filter(p => p.age && p.weight).map((p, i) => ({
+          name: `Person ${i + 2}`,
+          age: parseInt(p.age), sex: p.sex, weight: parseFloat(p.weight),
+          weightUnit: form.weightUnit, goal: form.goal,
+        }))
+      ]
+      
+      const calcTargets = personList.map(p => {
+        const t = calculateTargets({ age: p.age, sex: p.sex, weight: p.weight, weightUnit: p.weightUnit, goal: p.goal, calAdjust: 0 })
+        return { name: p.name, ...t }
       })
       
-      // Average with additional people if any
-      const allPeople = [{ age: form.age, sex: form.sex, weight: form.weight, weightUnit: form.weightUnit, goal: form.goal }]
+      // Use primary person's targets for meal generation (meals serve all)
+      const primaryT = calcTargets[0]
+      setAllPersonTargets(calcTargets)
       
-      let avgCal = primaryTargets.targetCalories
-      let avgP = primaryTargets.proteinG
-      let avgC = primaryTargets.carbsG
-      let avgF = primaryTargets.fatG
-      
-      peopleData.forEach(p => {
-        if (p.age && p.weight) {
-          const pt = calculateTargets({
-            age: parseInt(p.age), sex: p.sex, weight: parseFloat(p.weight),
-            weightUnit: form.weightUnit, goal: form.goal, calAdjust: 0,
-          })
-          avgCal += pt.targetCalories
-          avgP += pt.proteinG
-          avgC += pt.carbsG
-          avgF += pt.fatG
-        }
-      })
-      
-      const totalPeople = 1 + peopleData.filter(p => p.age && p.weight).length
-      const avgTargets = {
-        targetCalories: Math.round(avgCal / totalPeople),
-        proteinG: Math.round(avgP / totalPeople),
-        carbsG: Math.round(avgC / totalPeople),
-        fatG: Math.round(avgF / totalPeople),
-      }
-      
-      const result = generateMeals(mealDb, dessertsDb, prefs, avgTargets, 0)
-      setTargets(avgTargets)
+      // Generate meals using primary person's targets (scaled for people count)
+      const result = generateMeals(mealDb, dessertsDb, prefs, primaryT, 0)
+      setTargets(primaryT)
       setPlanData(result)
       setCalAdjust(0)
       setGenerating(false)
@@ -543,13 +529,32 @@ function App() {
           <QuoteRotator />
 
           <div className="targets-card card fade-in-up">
-            <h2>🎯 Your Daily Targets {parseInt(form.people) > 1 ? `(×${form.people} people)` : ''}</h2>
-            <div className="targets-grid">
-              <div className="target-item"><div className="target-value">{targets.targetCalories}</div><div className="target-label">Calories</div></div>
-              <div className="target-item"><div className="target-value">{targets.proteinG}g</div><div className="target-label">Protein</div></div>
-              <div className="target-item"><div className="target-value">{targets.carbsG}g</div><div className="target-label">Carbs</div></div>
-              <div className="target-item"><div className="target-value">{targets.fatG}g</div><div className="target-label">Fat</div></div>
-            </div>
+            <h2>🎯 Daily Nutrition Targets</h2>
+            {allPersonTargets.length > 1 ? (
+              <div className="multi-person-targets">
+                {allPersonTargets.map((pt, i) => (
+                  <div key={i} className="person-target-block">
+                    <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--green-800)', marginBottom: '0.5rem' }}>{pt.name}</h4>
+                    <div className="targets-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                      <div className="target-item"><div className="target-value">{pt.targetCalories}</div><div className="target-label">Calories</div></div>
+                      <div className="target-item"><div className="target-value">{pt.proteinG}g</div><div className="target-label">Protein</div></div>
+                      <div className="target-item"><div className="target-value">{pt.carbsG}g</div><div className="target-label">Carbs</div></div>
+                      <div className="target-item"><div className="target-value">{pt.fatG}g</div><div className="target-label">Fat</div></div>
+                    </div>
+                  </div>
+                ))}
+                <p style={{ fontSize: '0.8rem', color: 'var(--gray-400)', marginTop: '0.75rem' }}>
+                  🍽️ Meals below are designed to serve {form.people} people. Each person eats the same meals but portion sizes can be adjusted to match their individual targets.
+                </p>
+              </div>
+            ) : (
+              <div className="targets-grid">
+                <div className="target-item"><div className="target-value">{targets.targetCalories}</div><div className="target-label">Calories</div></div>
+                <div className="target-item"><div className="target-value">{targets.proteinG}g</div><div className="target-label">Protein</div></div>
+                <div className="target-item"><div className="target-value">{targets.carbsG}g</div><div className="target-label">Carbs</div></div>
+                <div className="target-item"><div className="target-value">{targets.fatG}g</div><div className="target-label">Fat</div></div>
+              </div>
+            )}
             {form.freezerFriendly && <p style={{ fontSize: '0.85rem', color: 'var(--green-700)', fontWeight: 500 }}>🧊 Freezer-friendly mode active — meals selected for batch cooking & freezing</p>}
             <div className="macro-chart-container">
               <MacroChart protein={targets.proteinG} carbs={targets.carbsG} fat={targets.fatG} />

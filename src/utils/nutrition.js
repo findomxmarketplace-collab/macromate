@@ -59,12 +59,12 @@ function isFreezerFriendly(meal) {
 
 // Cooking method detection keywords
 const cookingKeywords = {
-  'BBQ & Grilling': ['grill', 'bbq', 'skewer', 'kebab', 'char', 'sear'],
-  'Oven-Baked': ['bake', 'roast', 'sheet pan', 'oven', '400°f', '375°f', '350°f'],
-  'Stove-Top (Quick)': ['fry', 'sauté', 'pan', 'stir', 'boil', 'cook', 'scramble', 'poach'],
-  'One-Pan / Sheet Pan': ['sheet pan', 'one pan', 'sheetpan', 'tray bake'],
-  'No-Cook / Assembly': ['smoothie', 'salad', 'wrap', 'parfait', 'bowl', 'blend', 'shake', 'yogurt', 'toast', 'no-cook', 'assemble'],
-  'Slow Cooker / Casserole': ['casserole', 'slow cook', 'braise', 'stew', 'simmer', 'chili', 'soup'],
+  'BBQ & Grilling': ['grill', 'bbq', 'skewer', 'kebab', 'char', 'sear', 'charcoal', 'barbeque', 'barbecue'],
+  'Oven-Baked': ['bake', 'roast', 'sheet pan', 'oven', '400°f', '375°f', '350°f', '425°f', 'baked', 'roasted'],
+  'Stove-Top (Quick)': ['fry', 'sauté', 'pan', 'stir', 'boil', 'cook', 'scramble', 'poach', 'simmer', 'pan-fry', 'sear', 'stove', 'skillet', 'wok'],
+  'One-Pan / Sheet Pan': ['sheet pan', 'one pan', 'sheetpan', 'tray bake', 'one-pan'],
+  'No-Cook / Assembly': ['smoothie', 'salad', 'wrap', 'parfait', 'bowl', 'blend', 'shake', 'yogurt', 'toast', 'no-cook', 'assemble', 'layer', 'dip', 'stick'],
+  'Slow Cooker / Casserole': ['casserole', 'slow cook', 'braise', 'stew', 'chili', 'soup', 'bake at', 'roast', 'simmer 20', 'simmer 15', 'simmer 30', 'oven', 'sweet potato baked'],
 }
 
 export function detectCookingMethod(meal) {
@@ -89,7 +89,13 @@ function pickRandom(arr, recentList, disliked, maxRecent = 5, preferFreezer = fa
   // Filter by cooking method if specified
   if (cookingMethod && cookingMethod !== 'No preference') {
     const methodMatch = pool.filter(m => matchesCookingMethod(m, cookingMethod))
-    if (methodMatch.length > 0) pool = methodMatch
+    if (methodMatch.length > 0) {
+      pool = methodMatch
+    } else {
+      // No exact matches — try relaxing: show all but tag them differently
+      // (returns original pool with a note that method couldn't be matched)
+      pool._noMethodMatch = true
+    }
   }
 
   if (preferFreezer) {
