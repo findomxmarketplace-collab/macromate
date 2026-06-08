@@ -80,7 +80,8 @@ function pickRandom(arr, recentList, disliked, maxRecent = 5, preferFreezer = fa
 }
 
 export function generateMeals(mealDb, dessertsDb, preferences, targets, calAdjust = 0) {
-  const { dietType, dislikedFoods, mealsPerDay, sweetTooth, allergies, freezerFriendly } = preferences
+  const { dietType, dislikedFoods, mealsPerDay, sweetTooth, allergies, freezerFriendly, planDuration } = preferences
+  const daysToGenerate = planDuration || 7
   const diet = mealDb[dietType] || mealDb['No restrictions']
 
   const disliked = [
@@ -96,7 +97,7 @@ export function generateMeals(mealDb, dessertsDb, preferences, targets, calAdjus
   if (mealsPerDay === 5) mealSlots.push('snack')
   const dessertOptions = dessertsDb[dietType] || dessertsDb['No restrictions']
 
-  for (let day = 0; day < 7; day++) {
+  for (let day = 0; day < daysToGenerate; day++) {
     const dayPlan = { day: day + 1, meals: [], totals: { calories: 0, protein: 0, carbs: 0, fat: 0 } }
 
     for (const slot of mealSlots) {

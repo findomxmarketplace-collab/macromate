@@ -55,15 +55,37 @@ function App() {
     age: '', sex: 'Male', weight: '', weightUnit: 'lbs', goal: 'Lose Fat',
     dietType: 'No restrictions', dislikedFoods: '', allergies: '',
     mealsPerDay: '3', sweetTooth: false, freezerFriendly: false, weeklyBudget: '',
-    people: '1',
+    people: '1', planDuration: '7',
   })
+  const [peopleData, setPeopleData] = useState([])
   const [planData, setPlanData] = useState(null)
   const [generating, setGenerating] = useState(false)
   const [targets, setTargets] = useState(null)
   const [calAdjust, setCalAdjust] = useState(0)
   const planRef = useRef(null)
 
-  const updateForm = (k, v) => setForm(p => ({ ...p, [k]: v }))
+  const updateForm = (k, v) => {
+    // When people count changes, update peopleData array length
+    if (k === 'people') {
+      const count = parseInt(v)
+      setForm(p => ({ ...p, people: v }))
+      setPeopleData(prev => {
+        const arr = [...prev]
+        while (arr.length < count - 1) arr.push({ age: '', sex: 'Male', weight: '' })
+        return arr.slice(0, count - 1)
+      })
+    } else {
+      setForm(p => ({ ...p, [k]: v }))
+    }
+  }
+  const updatePerson = (idx, field, val) => {
+    setPeopleData(prev => {
+      const arr = [...prev]
+      if (!arr[idx]) arr[idx] = { age: '', sex: 'Male', weight: '' }
+      arr[idx] = { ...arr[idx], [field]: val }
+      return arr
+    })
+  }
 
   const PAYPAL_URL = "https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=85X6ZA2CZDYH4"
 
@@ -83,19 +105,52 @@ function App() {
         allergies: form.allergies, mealsPerDay: parseInt(form.mealsPerDay),
         sweetTooth: form.sweetTooth, freezerFriendly: form.freezerFriendly,
         weeklyBudget: form.weeklyBudget, people: form.people,
+        planDuration: parseInt(form.planDuration) || 7,
       }
-      const t = calculateTargets({
+      
+      // Calculate targets for primary person
+      const primaryTargets = calculateTargets({
         age: parseInt(form.age), sex: form.sex, weight: parseFloat(form.weight),
         weightUnit: form.weightUnit, goal: form.goal, calAdjust: 0,
       })
-      const result = generateMeals(mealDb, dessertsDb, prefs, t, 0)
-      setTargets(t)
+      
+      // Average with additional people if any
+      const allPeople = [{ age: form.age, sex: form.sex, weight: form.weight, weightUnit: form.weightUnit, goal: form.goal }]
+      
+      let avgCal = primaryTargets.targetCalories
+      let avgP = primaryTargets.proteinG
+      let avgC = primaryTargets.carbsG
+      let avgF = primaryTargets.fatG
+      
+      peopleData.forEach(p => {
+        if (p.age && p.weight) {
+          const pt = calculateTargets({
+            age: parseInt(p.age), sex: p.sex, weight: parseFloat(p.weight),
+            weightUnit: form.weightUnit, goal: form.goal, calAdjust: 0,
+          })
+          avgCal += pt.targetCalories
+          avgP += pt.proteinG
+          avgC += pt.carbsG
+          avgF += pt.fatG
+        }
+      })
+      
+      const totalPeople = 1 + peopleData.filter(p => p.age && p.weight).length
+      const avgTargets = {
+        targetCalories: Math.round(avgCal / totalPeople),
+        proteinG: Math.round(avgP / totalPeople),
+        carbsG: Math.round(avgC / totalPeople),
+        fatG: Math.round(avgF / totalPeople),
+      }
+      
+      const result = generateMeals(mealDb, dessertsDb, prefs, avgTargets, 0)
+      setTargets(avgTargets)
       setPlanData(result)
       setCalAdjust(0)
       setGenerating(false)
       setPage('results')
     }, 1200)
-  }, [form])
+  }, [form, peopleData])
 
   const handleCalorieAdjust = (delta) => {
     const na = calAdjust + delta
@@ -105,7 +160,10 @@ function App() {
       allergies: form.allergies, mealsPerDay: parseInt(form.mealsPerDay),
       sweetTooth: form.sweetTooth, freezerFriendly: form.freezerFriendly,
       weeklyBudget: form.weeklyBudget, people: form.people,
+      planDuration: parseInt(form.planDuration) || 7,
     }
+    
+    // Recalculate with adjustment using same average approach
     const t = calculateTargets({
       age: parseInt(form.age), sex: form.sex, weight: parseFloat(form.weight),
       weightUnit: form.weightUnit, goal: form.goal, calAdjust: na,
@@ -319,14 +377,6 @@ function App() {
                     <select value={form.weightUnit} onChange={e => updateForm('weightUnit', e.target.value)} style={{ width: '100px' }}><option value="lbs">lbs</option><option value="kg">kg</option></select>
                   </div>
                 </div>
-                <div className="form-nav"><button className="btn btn-primary btn-block btn-lg" disabled={!canProceed} onClick={() => setStep(2)}>Next Step →</button></div>
-              </div>
-            )}
-
-            {step === 2 && (
-              <div className="form-step fade-in-up">
-                <h2>What are your preferences?</h2>
-                <p className="form-desc">We'll personalize everything around these choices.</p>
                 <div className="input-group">
                   <label>Number of People</label>
                   <select value={form.people} onChange={e => updateForm('people', e.target.value)}>
@@ -337,7 +387,45 @@ function App() {
                     <option value="5">5 people</option>
                     <option value="6">6+ people</option>
                   </select>
-                  <span className="hint">Ingredient quantities will be scaled automatically.</span>
+                  <span className="hint">MacroMate will calculate averages and scale ingredients for everyone.</span>
+                </div>
+                {parseInt(form.people) > 1 && peopleData.map((person, idx) => (
+                  <div key={idx} className="person-card" style={{ background: 'var(--green-50)', padding: '1rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem', border: '1px solid var(--green-200)' }}>
+                    <h4 style={{ fontSize: '0.95rem', marginBottom: '0.75rem', color: 'var(--green-800)' }}>Person {idx + 2}</h4>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <div style={{ flex: '1 1 100px' }}>
+                        <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--gray-700)' }}>Age</label>
+                        <input type="number" placeholder="e.g. 28" value={person.age || ''} onChange={e => updatePerson(idx, 'age', e.target.value)} min="10" max="120" style={{ width: '100%' }} />
+                      </div>
+                      <div style={{ flex: '1 1 120px' }}>
+                        <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--gray-700)' }}>Sex</label>
+                        <select value={person.sex || 'Male'} onChange={e => updatePerson(idx, 'sex', e.target.value)} style={{ width: '100%' }}>
+                          <option value="Male">Male</option>
+                          <option value="Female">Female</option>
+                        </select>
+                      </div>
+                      <div style={{ flex: '1 1 100px' }}>
+                        <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--gray-700)' }}>Weight</label>
+                        <input type="number" placeholder="e.g. 150" value={person.weight || ''} onChange={e => updatePerson(idx, 'weight', e.target.value)} min="30" max="700" style={{ width: '100%' }} />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <div className="form-nav"><button className="btn btn-primary btn-block btn-lg" disabled={!canProceed} onClick={() => setStep(2)}>Next Step →</button></div>
+              </div>
+            )}
+
+            {step === 2 && (
+              <div className="form-step fade-in-up">
+                <h2>What are your preferences?</h2>
+                <p className="form-desc">We'll personalize everything around these choices.</p>
+                <div className="input-group">
+                  <label>Plan Duration</label>
+                  <select value={form.planDuration} onChange={e => updateForm('planDuration', e.target.value)}>
+                    <option value="7">7 days (weekly)</option>
+                    <option value="30">30 days (monthly)</option>
+                  </select>
+                  <span className="hint">Monthly plans include more variety with 30 unique days of meals.</span>
                 </div>
                 <div className="input-group">
                   <label>Fitness Goal</label>
