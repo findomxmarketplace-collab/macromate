@@ -98,17 +98,21 @@ function matchesCookingMethod(meal, methods) {
   return false
 }
 
-function pickRandom(arr, recentList, disliked, maxRecent = 5, preferFreezer = false, cookingMethods = []) {
+function pickRandom(arr, recentList, disliked, maxRecent = 5, preferFreezer = false, cookingMethods = [], pantryIngredients = '') {
   let pool = arr.filter(m => {
     if (recentList.includes(m.name)) return false
     return !m.ingredients.some(ing => disliked.some(d => ing.toLowerCase().includes(d)))
   })
 
-  // Filter by cooking methods if specified
-  if (cookingMethods && cookingMethods.length > 0) {
-    const methodMatch = pool.filter(m => matchesCookingMethod(m, cookingMethods))
-    if (methodMatch.length > 0) pool = methodMatch
-    // If no matches found, fall through with original pool
+  // Prioritize meals using pantry ingredients
+  if (pantryIngredients) {
+    const pantryList = pantryIngredients.split(',').map(p => p.trim().toLowerCase())
+    const matching = pool.filter(m =>
+      m.ingredients.some(ing =>
+        pantryList.some(p => ing.toLowerCase().includes(p))
+      )
+    )
+    if (matching.length > 0) pool = matching
   }
 
   if (preferFreezer) {
@@ -128,7 +132,7 @@ function pickRandom(arr, recentList, disliked, maxRecent = 5, preferFreezer = fa
 }
 
 export function generateMeals(mealDb, dessertsDb, preferences, targets, calAdjust = 0) {
-  const { dietType, dislikedFoods, mealsPerDay, sweetTooth, allergies, freezerFriendly, planDuration, cookingMethods } = preferences
+  const { dietType, dislikedFoods, mealsPerDay, sweetTooth, allergies, freezerFriendly, planDuration, cookingMethods, pantryIngredients } = preferences
   const daysToGenerate = planDuration || 7
   const diet = mealDb[dietType] || mealDb['No restrictions']
 
@@ -151,7 +155,7 @@ export function generateMeals(mealDb, dessertsDb, preferences, targets, calAdjus
     for (const slot of mealSlots) {
       const options = diet[slot] || diet.breakfast
       if (!options || options.length === 0) continue
-      const meal = pickRandom(options, recentMeals[slot], disliked, 5, freezerFriendly, cookingMethods)
+      const meal = pickRandom(options, recentMeals[slot], disliked, 5, freezerFriendly, cookingMethods, pantryIngredients)
       recentMeals[slot].push(meal.name)
       if (recentMeals[slot].length > 7) recentMeals[slot].shift()
       const calories = Math.round(meal.protein * 4 + meal.carbs * 4 + meal.fat * 9)
@@ -163,7 +167,7 @@ export function generateMeals(mealDb, dessertsDb, preferences, targets, calAdjus
     }
 
     if (sweetTooth && dessertOptions && dessertOptions.length > 0) {
-      const dessert = pickRandom(dessertOptions, recentMeals.dessert, disliked, 5, freezerFriendly, cookingMethods)
+      const dessert = pickRandom(dessertOptions, recentMeals.dessert, disliked, 5, freezerFriendly, cookingMethods, pantryIngredients)
       recentMeals.dessert.push(dessert.name)
       if (recentMeals.dessert.length > 7) recentMeals.dessert.shift()
       const cal = Math.round(dessert.protein * 4 + dessert.carbs * 4 + dessert.fat * 9)

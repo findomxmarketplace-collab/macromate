@@ -105,4 +105,35 @@ export const motivationalQuotes = [
   { text: "Strength does not come from the body. It comes from the will.", author: "Unknown" },
 ]
 
+export const dailyNutritionTips = [
+  "🥚 Protein pacing: Spread your protein intake across 3-4 meals for better muscle synthesis.",
+  "🥦 Eat the rainbow: Different colored veggies provide different micronutrients — variety is key!",
+  "💧 Water first: Thirst is often mistaken for hunger. Drink a glass before reaching for a snack.",
+  "🌙 Late-night eating: Your body processes food differently at night. Try to finish eating 2-3 hours before bed.",
+  "🧂 Watch sodium: Most of your daily sodium comes from processed foods, not your salt shaker.",
+  "🍚 Carb timing: Eating most of your carbs around your workouts can improve energy and recovery.",
+  "🥑 Healthy fats: Avocado, nuts, olive oil, and fatty fish support hormone function and brain health.",
+  "📏 Portion sizes: Your palm = protein serving, fist = carbs, thumb = fats, cupped hand = veggies.",
+  "⏰ Eat mindfully: It takes ~20 minutes for your brain to register fullness. Slow down!",
+  "🔄 Variety matters: Rotating your protein sources ensures you get a full amino acid profile.",
+  "🍳 Don't skip breakfast: A protein-rich breakfast helps stabilize blood sugar all day.",
+  "🥩 Chew thoroughly: Better digestion starts in your mouth. Aim for 20-30 chews per bite.",
+  "🌿 Spice it up: Turmeric, ginger, cinnamon, and cayenne have anti-inflammatory benefits.",
+  "📊 Track trends, not days: One high-calorie day won't ruin your progress. Look at weekly trends.",
+  "🧊 Batch cook: Cooking in bulk saves time and makes healthy eating easier during busy weeks.",
+]
+
+export function calculateNutritionScore(dayTotals, targets) {
+  const calPct = Math.min(100, (dayTotals.calories / targets.targetCalories) * 100)
+  const proPct = Math.min(100, (dayTotals.protein / targets.proteinG) * 100)
+  const carbPct = Math.min(100, (dayTotals.carbs / targets.carbsG) * 100)
+  const fatPct = Math.min(100, (dayTotals.fat / targets.fatG) * 100)
+  const avg = (calPct + proPct + carbPct + fatPct) / 4
+  if (avg >= 90) return { grade: 'A', label: 'Excellent', color: '#22c55e' }
+  if (avg >= 80) return { grade: 'B', label: 'Great', color: '#3b82f6' }
+  if (avg >= 70) return { grade: 'C', label: 'Good', color: '#f59e0b' }
+  if (avg >= 60) return { grade: 'D', label: 'Fair', color: '#f97316' }
+  return { grade: 'F', label: 'Needs adjustment', color: '#ef4444' }
+}
+
 export default dessertsDb

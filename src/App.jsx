@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import mealDb from './data/meals'
-import dessertsDb, { motivationalQuotes, getSupermarkets, getCostTier } from './data/desserts'
+import dessertsDb, { motivationalQuotes, dailyNutritionTips, calculateNutritionScore, getSupermarkets, getCostTier } from './data/desserts'
 import { calculateTargets, generateMeals, swapMeal } from './utils/nutrition'
 import { downloadPDF } from './components/MealPlanPDF'
 import './App.css'
@@ -55,7 +55,7 @@ function App() {
     age: '', sex: 'Male', weight: '', weightUnit: 'lbs', goal: 'Lose Fat',
     dietType: 'No restrictions', dislikedFoods: '', allergies: '',
     mealsPerDay: '3', sweetTooth: false, freezerFriendly: false, weeklyBudget: '',
-    people: '1', planDuration: '7', cookingMethods: [],
+    people: '1', planDuration: '7', cookingMethods: [], pantryIngredients: '',
   })
   const [peopleData, setPeopleData] = useState([])
   const [planData, setPlanData] = useState(null)
@@ -100,7 +100,7 @@ function App() {
 
   const handlePurchase = () => {
     window.open(PAYPAL_URL, '_blank')
-    if (window.confirm('After completing your $22 payment on PayPal, click OK to unlock MacroMate instantly.\n\nAlready paid? Click OK to get started!')) {
+    if (window.confirm('After completing your $4.99 payment on PayPal, click OK to unlock MacroMate instantly.\n\nAlready paid? Click OK to get started!')) {
       localStorage.setItem('macromate_purchased', 'true')
       setPurchased(true)
     }
@@ -114,7 +114,7 @@ function App() {
         allergies: form.allergies, mealsPerDay: parseInt(form.mealsPerDay),
         sweetTooth: form.sweetTooth, freezerFriendly: form.freezerFriendly,
         weeklyBudget: form.weeklyBudget, people: form.people,
-        planDuration: parseInt(form.planDuration) || 7, cookingMethods: form.cookingMethods || [],
+        planDuration: parseInt(form.planDuration) || 7, cookingMethods: form.cookingMethods || [], pantryIngredients: form.pantryIngredients,
       }
       
       // Calculate targets for each person separately (not averaged)
@@ -157,7 +157,7 @@ function App() {
       allergies: form.allergies, mealsPerDay: parseInt(form.mealsPerDay),
       sweetTooth: form.sweetTooth, freezerFriendly: form.freezerFriendly,
       weeklyBudget: form.weeklyBudget, people: form.people,
-      planDuration: parseInt(form.planDuration) || 7, cookingMethods: form.cookingMethods || [],
+      planDuration: parseInt(form.planDuration) || 7, cookingMethods: form.cookingMethods || [], pantryIngredients: form.pantryIngredients,
     }
     
     // Recalculate with adjustment using same average approach
@@ -219,11 +219,11 @@ function App() {
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', marginBottom: '3rem' }}>
               <div className="price-tag">
-                <span className="price-amount">$22</span>
+                <span className="price-amount">$4.99</span>
                 <span className="price-label">one-time · unlimited use</span>
               </div>
               <button className="btn btn-primary btn-lg hero-cta" onClick={handlePurchase}>
-                💳 Buy Now — $22
+                💳 Buy Now — $4.99
               </button>
               <p style={{ fontSize: '0.8rem', color: 'var(--gray-400)' }}>
                 Secure checkout via PayPal · Instant access · No recurring fees
@@ -295,7 +295,7 @@ function App() {
                         </div>
                         <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
                           <button className="btn btn-primary btn-lg" onClick={handlePurchase}>
-                            💳 Get Your Personalized Plan — $22
+                            💳 Get Your Personalized Plan — $4.99
                           </button>
                         </div>
                       </div>
@@ -319,7 +319,7 @@ function App() {
             </div>
             <div style={{ textAlign: 'center', marginTop: '2rem' }}>
               <button className="btn btn-primary btn-lg" onClick={handlePurchase}>
-                💳 Buy Now — $22
+                💳 Buy Now — $4.99
               </button>
               <p style={{ fontSize: '0.8rem', color: 'var(--gray-400)', marginTop: '0.5rem' }}>No refunds — all sales final</p>
               <a href="#" onClick={(e) => { e.preventDefault(); localStorage.setItem('macromate_purchased', 'true'); setPurchased(true); }}
@@ -421,6 +421,14 @@ function App() {
                     <input type="number" placeholder="e.g. 175" value={form.weight} onChange={e => updateForm('weight', e.target.value)} style={{ flex: 1 }} min="30" max="700" />
                     <select value={form.weightUnit} onChange={e => updateForm('weightUnit', e.target.value)} style={{ width: '100px' }}><option value="lbs">lbs</option><option value="kg">kg</option></select>
                   </div>
+                </div>
+                <div className="input-group">
+                  <label>Your Goal</label>
+                  <select value={form.goal} onChange={e => updateForm('goal', e.target.value)}>
+                    <option value="Lose Fat">Lose Fat</option>
+                    <option value="Build Muscle">Build Muscle</option>
+                    <option value="Maintain Weight">Maintain Weight</option>
+                  </select>
                 </div>
                 <div className="input-group">
                   <label>Number of People</label>
@@ -536,6 +544,7 @@ function App() {
                 </div>
                 <div className="input-group"><label>Foods You Dislike (optional)</label><input type="text" placeholder="e.g. broccoli, salmon" value={form.dislikedFoods} onChange={e => updateForm('dislikedFoods', e.target.value)} /><span className="hint">Separate with commas.</span></div>
                 <div className="input-group"><label>Allergies (optional)</label><input type="text" placeholder="e.g. nuts, dairy, shellfish" value={form.allergies} onChange={e => updateForm('allergies', e.target.value)} /><span className="hint">We'll filter out meals containing these.</span></div>
+                <div className="input-group"><label>🥩 What's in Your Pantry? (optional)</label><input type="text" placeholder="e.g. chicken breast, eggs, spinach, rice" value={form.pantryIngredients || ''} onChange={e => updateForm('pantryIngredients', e.target.value)} /><span className="hint">Tell us what ingredients you already have — we'll prioritize meals that use them and reduce food waste!</span></div>
                 <div className="input-group">
                   <label>Weekly Grocery Budget (optional)</label>
                   <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}><span>$</span><input type="number" placeholder="e.g. 80" value={form.weeklyBudget} onChange={e => updateForm('weeklyBudget', e.target.value)} min="20" max="300" /></div>
