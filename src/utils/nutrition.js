@@ -127,7 +127,13 @@ function pickRandom(arr, recentList, disliked, maxRecent = 5, preferFreezer = fa
       if (freezerMeals.length > 0) pool = freezerMeals
     }
   }
-  if (pool.length === 0) return arr[Math.floor(Math.random() * arr.length)]
+  if (pool.length === 0) {
+    // Hard fallback: respect disliked/allergen filtering ONLY, skip all other filters
+    const safePool = arr.filter(m => !m.ingredients.some(ing => disliked.some(d => ing.toLowerCase().includes(d))))
+    if (safePool.length > 0) return safePool[Math.floor(Math.random() * safePool.length)]
+    // Last resort: return ANY meal (avoid crash)
+    return arr[Math.floor(Math.random() * arr.length)]
+  }
   return pool[Math.floor(Math.random() * pool.length)]
 }
 

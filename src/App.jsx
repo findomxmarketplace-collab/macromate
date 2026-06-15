@@ -710,7 +710,20 @@ function App() {
                   </div>
                 ))}
               </div>
-              <div className="day-micro-chart"><MacroChart protein={day.totals.protein} carbs={day.totals.carbs} fat={day.totals.fat} /></div>
+              <div className="day-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1.5rem', borderTop: '1px solid var(--gray-100)', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <div className="day-micro-chart"><MacroChart protein={day.totals.protein} carbs={day.totals.carbs} fat={day.totals.fat} /></div>
+                {(() => { const score = calculateNutritionScore(day.totals, targets); return (
+                  <div className="nutrition-score" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ fontWeight: 800, fontSize: '1.25rem', color: score.color }}>{score.grade}</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>{score.label}</span>
+                  </div>
+                )})()}
+              </div>
+              {(() => { const tipIdx = (idx + planData.mealsByDay.length) % dailyNutritionTips.length; return (
+                <div className="daily-tip" style={{ padding: '0.5rem 1.5rem 0.75rem', borderTop: '1px solid var(--gray-100)', fontSize: '0.8rem', color: 'var(--green-700)', background: 'var(--green-50)' }}>
+                  💡 {dailyNutritionTips[tipIdx]}
+                </div>
+              )})()}
             </div>
           ))}
 
@@ -724,6 +737,37 @@ function App() {
                   <label htmlFor={`grocery-${idx}`}>{item}</label>
                 </div>
               ))}
+            </div>
+          </div>
+
+          {form.pantryIngredients && (
+            <div className="pantry-note card fade-in-up" style={{ padding: '0.75rem 1rem', marginBottom: '1rem', background: '#fefce8', border: '1px solid #fde68a', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <span style={{ fontSize: '1.25rem' }}>🥩</span>
+              <span style={{ fontSize: '0.85rem', color: 'var(--gray-700)' }}><strong>Pantry Mode active:</strong> Meals prioritized to use ingredients you already have — {form.pantryIngredients}</span>
+            </div>
+          )}
+
+          {/* Meal Prep Day Suggestion */}
+          <div className="prep-card card fade-in-up">
+            <h2>📦 Meal Prep Day — Sunday</h2>
+            <p className="grocery-note">Set aside 1-2 hours on Sunday to prep for the week. Here's what to batch-cook:</p>
+            <div className="prep-tips">
+              <div className="prep-tip">
+                <span className="prep-icon">🥘</span>
+                <div><strong>Cook grains & proteins</strong><p className="prep-note">Cook all rice/quinoa and grill/bake all chicken, beef, or tofu for the week. Store in separate containers.</p></div>
+              </div>
+              <div className="prep-tip">
+                <span className="prep-icon">🥦</span>
+                <div><strong>Wash & chop veggies</strong><p className="prep-note">Wash, chop, and store all vegetables in airtight containers. They'll stay fresh and ready to cook.</p></div>
+              </div>
+              <div className="prep-tip">
+                <span className="prep-icon">🧊</span>
+                <div><strong>Portion & freeze</strong><p className="prep-note">Portion out meals that freeze well (soups, chilis, casseroles). Label and freeze for busy days.</p></div>
+              </div>
+              <div className="prep-tip">
+                <span className="prep-icon">🥗</span>
+                <div><strong>Prepare sauces & dressings</strong><p className="prep-note">Mix dressings, marinades, and sauces for the week. Store in jars in the fridge.</p></div>
+              </div>
             </div>
           </div>
 
