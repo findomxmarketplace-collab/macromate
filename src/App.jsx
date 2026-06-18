@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import mealDb from './data/meals'
 import dessertsDb, { motivationalQuotes, dailyNutritionTips, calculateNutritionScore, getSupermarkets, getCostTier } from './data/desserts'
+import { getAllergenKeywords, ALLERGEN_OPTIONS } from './data/allergens'
 import { calculateTargets, generateMeals, swapMeal } from './utils/nutrition'
 import { downloadPDF } from './components/MealPlanPDF'
 import './App.css'
@@ -53,9 +54,10 @@ function App() {
   const [purchased, setPurchased] = useState(() => localStorage.getItem('macromate_purchased') === 'true')
   const [form, setForm] = useState({
     age: '', sex: 'Male', weight: '', weightUnit: 'lbs', goal: 'Lose Fat',
-    dietType: 'No restrictions', dislikedFoods: '', allergies: '',
+    dietType: 'No restrictions', dislikedFoods: '', allergies: '', allergens: [],
     mealsPerDay: '3', sweetTooth: false, freezerFriendly: false, weeklyBudget: '',
     people: '1', planDuration: '7', cookingMethods: [], pantryIngredients: '',
+    snacker: false,
   })
   const [peopleData, setPeopleData] = useState([])
   const [planData, setPlanData] = useState(null)
@@ -74,8 +76,16 @@ function App() {
         while (arr.length < count - 1) arr.push({ age: '', sex: 'Male', weight: '', goal: 'Lose Fat' })
         return arr.slice(0, count - 1)
       })
+    } else if (k === 'allergens') {
+      // Toggle allergen in the array
+      setForm(p => {
+        const current = [...(p.allergens || [])]
+        const idx = current.indexOf(v)
+        if (idx >= 0) current.splice(idx, 1)
+        else current.push(v)
+        return { ...p, allergens: current }
+      })
     } else if (k === 'cookingMethods') {
-      // Toggle cooking method in the array
       setForm(p => {
         const current = [...(p.cookingMethods || [])]
         const idx = current.indexOf(v)
@@ -87,6 +97,17 @@ function App() {
       setForm(p => ({ ...p, [k]: v }))
     }
   }
+
+  // Load saved details from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('macromate_saved_form')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        setForm(prev => ({ ...prev, ...parsed }))
+      }
+    } catch (e) {}
+  }, [])
   const updatePerson = (idx, field, val) => {
     setPeopleData(prev => {
       const arr = [...prev]
@@ -108,11 +129,22 @@ function App() {
 
   const handleGenerate = useCallback(() => {
     setGenerating(true)
+    
+    // Expand allergen checkboxes into keyword string
+    const allergenKeywords = getAllergenKeywords(form.allergens || [])
+    const allergyStr = [...new Set([...(form.allergies || '').split(',').map(s => s.trim()).filter(Boolean), ...allergenKeywords])].join(',')
+    
+    // Save form to localStorage for next visit
+    try {
+      localStorage.setItem('macromate_saved_form', JSON.stringify(form))
+    } catch (e) {}
+    
     setTimeout(() => {
       const prefs = {
         dietType: form.dietType, dislikedFoods: form.dislikedFoods,
-        allergies: form.allergies, mealsPerDay: parseInt(form.mealsPerDay),
+        allergies: allergyStr, mealsPerDay: parseInt(form.mealsPerDay),
         sweetTooth: form.sweetTooth, freezerFriendly: form.freezerFriendly,
+        snacker: form.snacker,
         weeklyBudget: form.weeklyBudget, people: form.people,
         planDuration: parseInt(form.planDuration) || 7, cookingMethods: form.cookingMethods || [], pantryIngredients: form.pantryIngredients,
       }
@@ -542,8 +574,30 @@ function App() {
                 <div className="input-group">
                   <label className="toggle-label"><input type="checkbox" checked={form.freezerFriendly} onChange={e => updateForm('freezerFriendly', e.target.checked)} style={{ width: 'auto', marginRight: '0.5rem', accentColor: 'var(--green-600)' }} /> 🧊 Prefer freezer-friendly meals (batch cook & freeze)</label>
                 </div>
+                <div className="input-group">
+                  <label className="toggle-label"><input type="checkbox" checked={form.snacker} onChange={e => updateForm('snacker', e.target.checked)} style={{ width: 'auto', marginRight: '0.5rem', accentColor: 'var(--green-600)' }} /> 🍿 I'm a snacker — add portion-controlled snacks each day</label>
+                </div>
                 <div className="input-group"><label>Foods You Dislike (optional)</label><input type="text" placeholder="e.g. broccoli, salmon" value={form.dislikedFoods} onChange={e => updateForm('dislikedFoods', e.target.value)} /><span className="hint">Separate with commas.</span></div>
-                <div className="input-group"><label>Allergies (optional)</label><input type="text" placeholder="e.g. nuts, dairy, shellfish" value={form.allergies} onChange={e => updateForm('allergies', e.target.value)} /><span className="hint">We'll filter out meals containing these.</span></div>
+                <div className="input-group">
+                  <label>Allergies (check all that apply)</label>
+                  <div className="allergen-checkboxes">
+                    {ALLERGEN_OPTIONS.map(a => (
+                      <label key={a} className="allergen-checkbox-label" style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+                        padding: '0.35rem 0.7rem', border: `2px solid ${(form.allergens || []).includes(a) ? 'var(--red-500)' : 'var(--gray-200)'}`,
+                        borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '0.85rem',
+                        background: (form.allergens || []).includes(a) ? '#fef2f2' : '#fff',
+                        transition: 'all 0.15s', marginBottom: '0.35rem'
+                      }}>
+                        <input type="checkbox" checked={(form.allergens || []).includes(a)}
+                          onChange={() => updateForm('allergens', a)}
+                          style={{ accentColor: '#ef4444', width: 'auto' }} />
+                        <span>{a}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <span className="hint" style={{ marginTop: '0.5rem', display: 'block' }}>Checked allergies will be strictly excluded from all meals.</span>
+                </div>
                 <div className="input-group"><label>🥩 What's in Your Pantry? (optional)</label><input type="text" placeholder="e.g. chicken breast, eggs, spinach, rice" value={form.pantryIngredients || ''} onChange={e => updateForm('pantryIngredients', e.target.value)} /><span className="hint">Tell us what ingredients you already have — we'll prioritize meals that use them and reduce food waste!</span></div>
                 <div className="input-group">
                   <label>Weekly Grocery Budget (optional)</label>
