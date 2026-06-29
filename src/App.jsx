@@ -260,11 +260,50 @@ function App() {
               <p style={{ fontSize: '0.8rem', color: 'var(--gray-400)' }}>
                 Secure checkout via PayPal · Instant access · No recurring fees
               </p>
+              <p style={{ fontSize: '0.8rem', color: 'var(--gray-400)', marginTop: '0.25rem' }}>
+                ⭐ Trusted by health-conscious users worldwide
+              </p>
               <a href="#" onClick={(e) => { e.preventDefault(); localStorage.setItem('macromate_purchased', 'true'); setPurchased(true); }}
                 style={{ fontSize: '0.75rem', color: 'var(--gray-300)', textDecoration: 'underline', cursor: 'pointer', marginTop: '0.25rem' }}>
                 Already purchased? Click to unlock (test mode)
               </a>
             </div>
+
+            {/* Free emergency meal teaser */}
+            <div className="emergency-teaser card" style={{ maxWidth: '500px', margin: '0 auto 3rem', padding: '1.5rem', textAlign: 'center', background: '#fffbeb', border: '1px solid #fde68a' }}>
+              <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>🔥 Emergency Meal</h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--gray-500)', marginBottom: '1rem' }}>Got random ingredients? Type them in and get a recipe idea instantly — free, no purchase needed.</p>
+              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <input id="emergency-input" placeholder="e.g. chicken, rice, tomato" style={{ flex: 1, fontSize: '0.9rem' }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') {
+                    const val = e.target.value
+                    if (!val) return
+                    const ings = val.split(',').map(i => i.trim()).filter(Boolean)
+                    if (ings.length < 2) return
+                    const found = Object.values(mealDb).flatMap(d => Object.values(d).flat()).filter(m =>
+                      m.ingredients.some(i => ings.some(ing => i.toLowerCase().includes(ing.toLowerCase())))
+                    )
+                    const meal = found.length > 0 ? found[Math.floor(Math.random() * found.length)] : null
+                    const result = document.getElementById('emergency-result')
+                    if (meal && result) {
+                      const cal = Math.round(meal.protein * 4 + meal.carbs * 4 + meal.fat * 9)
+                      result.innerHTML = `<div style="background:var(--green-50);padding:0.75rem;border-radius:8px;margin-top:0.75rem"><strong style="font-size:1rem">${meal.name}</strong><br><span style="font-size:0.8rem;color:var(--gray-500)">${cal} cal · P${meal.protein}g C${meal.carbs}g F${meal.fat}g</span><br><span style="font-size:0.8rem;color:var(--gray-500)">${meal.instructions.substring(0, 80)}...</span><br><span style="font-size:0.75rem;color:var(--gray-400);margin-top:0.5rem;display:block">✨ Want 7 days of this? Get the full plan below 👇</span></div>`
+                    } else if (result) {
+                      result.innerHTML = `<div style="background:#fef2f2;padding:0.75rem;border-radius:8px;margin-top:0.75rem;font-size:0.85rem;color:var(--gray-500)">No exact match found — try different ingredients or <a href="#" onclick="localStorage.setItem('macromate_purchased','true');window.location.reload()" style="color:var(--green-600)">unlock full access</a> for 400+ curated meals!</div>`
+                    }
+                  }}}
+                />
+                <button className="btn btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+                  onClick={() => {
+                    const input = document.getElementById('emergency-input')
+                    const event = new KeyboardEvent('keydown', { key: 'Enter' })
+                    input.dispatchEvent(event)
+                  }}>Generate</button>
+              </div>
+              <div id="emergency-result"></div>
+              <p style={{ fontSize: '0.7rem', color: 'var(--gray-300)', marginTop: '0.5rem' }}>Free sample — see what MacroMate can do!</p>
+            </div>
+
             <div className="benefits">
               <div className="benefit-card">
                 <div className="benefit-icon">🎯</div>
@@ -347,6 +386,8 @@ function App() {
               <div className="feature-item">✅ Weight progress tracker with auto-recalculation</div>
               <div className="feature-item">✅ PDF download (digital cookbook)</div>
               <div className="feature-item">✅ Regenerate new plans as you progress</div>
+              <div className="feature-item">✅ 🔥 Emergency Meal Generator — type any ingredients, get instant recipes</div>
+              <div className="feature-item">✅ 🥘 Leftover repurposing ideas to reduce food waste</div>
               <div className="feature-item">✅ One purchase = lifetime access</div>
             </div>
             <div style={{ textAlign: 'center', marginTop: '2rem' }}>
