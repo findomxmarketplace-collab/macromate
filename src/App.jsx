@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import mealDb from './data/meals'
-import dessertsDb, { motivationalQuotes, dailyNutritionTips, calculateNutritionScore, getSupermarkets, getCostTier } from './data/desserts'
+import dessertsDb, { motivationalQuotes, dailyNutritionTips, calculateNutritionScore, getSupermarkets, getDiscountLinks, getCostTier, getMealCost, COUNTRY_OPTIONS } from './data/desserts'
 import { getAllergenKeywords, ALLERGEN_OPTIONS } from './data/allergens'
 import { calculateTargets, generateMeals, swapMeal } from './utils/nutrition'
 import { downloadPDF } from './components/MealPlanPDF'
@@ -57,7 +57,7 @@ function App() {
     dietType: 'No restrictions', dislikedFoods: '', allergies: '', allergens: [],
     mealsPerDay: '3', sweetTooth: false, freezerFriendly: false, weeklyBudget: '',
     people: '1', planDuration: '7', cookingMethods: [], pantryIngredients: '',
-    snacker: false,
+    snacker: false, country: 'USA',
   })
   const [peopleData, setPeopleData] = useState([])
   const [planData, setPlanData] = useState(null)
@@ -604,6 +604,13 @@ function App() {
                   <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}><span>$</span><input type="number" placeholder="e.g. 80" value={form.weeklyBudget} onChange={e => updateForm('weeklyBudget', e.target.value)} min="20" max="300" /></div>
                   <span className="hint">We'll suggest the most affordable supermarkets.</span>
                 </div>
+                <div className="input-group">
+                  <label>Country</label>
+                  <select value={form.country} onChange={e => updateForm('country', e.target.value)}>
+                    {COUNTRY_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                  <span className="hint">We'll tailor supermarket suggestions and discount links to your location.</span>
+                </div>
                 <div className="form-nav" style={{ display: 'flex', gap: '0.75rem' }}>
                   <button className="btn btn-secondary btn-lg" onClick={() => setStep(1)} style={{ flex: 1 }}>← Back</button>
                   <button className="btn btn-primary btn-lg" style={{ flex: 2 }} onClick={() => setStep(3)}>Review →</button>
@@ -645,7 +652,8 @@ function App() {
   // ===== RESULTS =====
   if (page === 'results' && planData) {
     const { mealsByDay, groceryList } = planData
-    const supermarkets = getSupermarkets(form.weeklyBudget)
+    const supermarkets = getSupermarkets(form.weeklyBudget, form.country)
+    const discountLinks = getDiscountLinks(form.country)
     const disliked = [
       ...(form.dislikedFoods ? form.dislikedFoods.split(',').map(f => f.trim().toLowerCase()) : []),
       ...(form.allergies ? form.allergies.split(',').map(a => a.trim().toLowerCase()) : []),
@@ -746,6 +754,7 @@ function App() {
                       <div className="meal-slot-badge">{SLOT_ICONS[meal.slot] || '🍽️'} {SLOT_NAMES[meal.slot] || meal.slot}</div>
                       <div className="meal-tags">
                         <span className="cost-badge">{meal.cost || getCostTier(meal.ingredients)}</span>
+                        <span className="cost-amount" style={{ fontSize: '0.75rem', color: 'var(--gray-500)', fontWeight: 500 }}>${getMealCost(meal.cost || getCostTier(meal.ingredients), form.country).toFixed(2)}</span>
                         <span className="prep-badge">⏱️ {meal.prepTime || '15 min'}</span>
                       </div>
                     </div>
@@ -826,25 +835,15 @@ function App() {
           </div>
 
           <div className="discount-card card fade-in-up">
-            <h2>💰 Save on Your Groceries</h2>
-            <p className="grocery-note">Save money on your meal plan ingredients with these money-saving resources.</p>
+            <h2>💰 Save on Your Groceries {form.country !== 'USA' ? `(${form.country})` : ''}</h2>
+            <p className="grocery-note">Money-saving resources tailored to {form.country}.</p>
             <div className="discount-grid">
-              <a href="https://www.offers.com/grocery-coupons/" target="_blank" rel="noopener noreferrer" className="discount-item">
-                <span className="discount-icon">🏪</span>
-                <div><strong>Check Supermarket Weekly Ads</strong><p className="discount-note">Find grocery coupons and weekly deals at stores near you on Offers.com.</p></div>
-              </a>
-              <a href="https://ibotta.com" target="_blank" rel="noopener noreferrer" className="discount-item">
-                <span className="discount-icon">💵</span>
-                <div><strong>Cashback Apps</strong><p className="discount-note">Ibotta, Rakuten, and Fetch Rewards offer cashback on grocery purchases.</p></div>
-              </a>
-              <a href="https://www.toogoodtogo.com" target="_blank" rel="noopener noreferrer" className="discount-item">
-                <span className="discount-icon">♻️</span>
-                <div><strong>Too Good To Go</strong><p className="discount-note">Rescue surplus food from local stores at a fraction of the price.</p></div>
-              </a>
-              <a href="https://www.thekrazycouponlady.com" target="_blank" rel="noopener noreferrer" className="discount-item">
-                <span className="discount-icon">📝</span>
-                <div><strong>Coupon Matchups & Deals</strong><p className="discount-note">The Krazy Coupon Lady helps you stack coupons and find the best grocery deals.</p></div>
-              </a>
+              {discountLinks.map((d, i) => (
+                <a key={i} href={d.url} target="_blank" rel="noopener noreferrer" className="discount-item">
+                  <span className="discount-icon">{d.icon}</span>
+                  <div><strong>{d.title}</strong><p className="discount-note">{d.desc}</p></div>
+                </a>
+              ))}
             </div>
           </div>
 

@@ -61,14 +61,94 @@ export function getPrepTime(instructions) {
   return '15 min'
 }
 
-// Supermarket recommendations based on budget
-export function getSupermarkets(weeklyBudget) {
-  if (!weeklyBudget) return ['Aldi', 'Lidl']
-  const budget = parseInt(weeklyBudget)
-  if (budget < 60) return ['Aldi', 'Lidl']
-  if (budget < 90) return ['Tesco', 'Aldi']
-  if (budget < 130) return ['Tesco', 'Walmart']
-  return ['Whole Foods', 'Waitrose']
+// Supermarket recommendations based on budget AND country
+const countryData = {
+  'USA': {
+    supermarkets: (budget) => {
+      const b = parseInt(budget) || 80
+      if (b < 60) return ['Aldi', 'Walmart']
+      if (b < 90) return ['Walmart', 'Kroger']
+      if (b < 130) return ['Target', 'Trader Joe\'s']
+      return ['Whole Foods', 'Sprouts']
+    },
+    discounts: [
+      { icon: '🏪', title: 'Weekly Grocery Deals', desc: 'Check Flipp for local flyers & coupons near you.', url: 'https://flipp.com' },
+      { icon: '💵', title: 'Cashback Apps', desc: 'Ibotta & Fetch Rewards offer cashback on groceries.', url: 'https://ibotta.com' },
+      { icon: '♻️', title: 'Too Good To Go', desc: 'Rescue surplus food from local stores.', url: 'https://www.toogoodtogo.com' },
+      { icon: '📝', title: 'Coupon Matchups', desc: 'The Krazy Coupon Lady stacks deals at major chains.', url: 'https://www.thekrazycouponlady.com' },
+    ]
+  },
+  'UK': {
+    supermarkets: (budget) => {
+      const b = parseInt(budget) || 70
+      if (b < 50) return ['Aldi', 'Lidl']
+      if (b < 75) return ['Tesco', 'Asda']
+      if (b < 100) return ['Sainsbury\'s', 'Morrisons']
+      return ['Waitrose', 'M&S']
+    },
+    discounts: [
+      { icon: '🏪', title: 'Supermarket Deals', desc: 'Check HotUKDeals for the best grocery bargains.', url: 'https://www.hotukdeals.com' },
+      { icon: '💵', title: 'Cashback', desc: 'TopCashback & Quidco offer cashback on grocery shops.', url: 'https://www.topcashback.co.uk' },
+      { icon: '♻️', title: 'Too Good To Go', desc: 'Rescue unsold food at half price from local shops.', url: 'https://www.toogoodtogo.com' },
+      { icon: '📝', title: 'Voucher Codes', desc: 'Find supermarket voucher codes on VoucherCodes.', url: 'https://www.vouchercodes.co.uk' },
+    ]
+  },
+  'Canada': {
+    supermarkets: (budget) => {
+      const b = parseInt(budget) || 90
+      if (b < 60) return ['No Frills', 'FreshCo']
+      if (b < 90) return ['Loblaws', 'Sobeys']
+      if (b < 130) return ['Metro', 'Save-On-Foods']
+      return ['Whole Foods', 'Farm Boy']
+    },
+    discounts: [
+      { icon: '🏪', title: 'Weekly Flyers', desc: 'Check Reebee for local grocery flyers & deals.', url: 'https://www.reebee.com' },
+      { icon: '💵', title: 'Cashback Apps', desc: 'Checkout 51 & Caddle offer grocery cashback.', url: 'https://www.checkout51.com' },
+      { icon: '♻️', title: 'Flashfood', desc: 'Save on surplus food at major Canadian grocers.', url: 'https://www.flashfood.com' },
+      { icon: '📝', title: 'Coupon Lady Canada', desc: 'SmartCanadianSaver has coupon matchups.', url: 'https://smartcanadiansaver.ca' },
+    ]
+  },
+  'Australia': {
+    supermarkets: (budget) => {
+      const b = parseInt(budget) || 110
+      if (b < 70) return ['Aldi', 'IGA']
+      if (b < 110) return ['Coles', 'Woolworths']
+      return ['Harris Farm', 'Whole Foods']
+    },
+    discounts: [
+      { icon: '🏪', title: 'Weekly Specials', desc: 'Check Ozbargain for the best grocery deals.', url: 'https://www.ozbargain.com.au' },
+      { icon: '💵', title: 'Cashback', desc: 'Cashrewards & ShopBack offer grocery cashback.', url: 'https://www.cashrewards.com.au' },
+      { icon: '♻️', title: 'Too Good To Go', desc: 'Rescue food surplus from local stores.', url: 'https://www.toogoodtogo.com' },
+      { icon: '📝', title: 'Catalogue Deals', desc: 'View weekly catalogues from all major grocers.', url: 'https://www.catalogues.com.au' },
+    ]
+  },
+}
+
+const DEFAULT_COUNTRY = 'USA'
+
+export function getSupermarkets(weeklyBudget, country) {
+  const data = countryData[country] || countryData[DEFAULT_COUNTRY]
+  return data.supermarkets(weeklyBudget)
+}
+
+export function getDiscountLinks(country) {
+  const data = countryData[country] || countryData[DEFAULT_COUNTRY]
+  return data.discounts
+}
+
+export const COUNTRY_OPTIONS = Object.keys(countryData)
+
+// Approximate meal costs based on cost tier and country
+const countryCosts = {
+  'USA': { '💰': 2.50, '💰💰': 4.50, '💰💰💰': 7.00 },
+  'UK': { '💰': 2.00, '💰💰': 3.50, '💰💰💰': 6.00 },
+  'Canada': { '💰': 2.75, '💰💰': 4.75, '💰💰💰': 7.50 },
+  'Australia': { '💰': 3.00, '💰💰': 5.00, '💰💰💰': 8.00 },
+}
+
+export function getMealCost(costTier, country) {
+  const costs = countryCosts[country] || countryCosts['USA']
+  return costs[costTier] || costs['💰']
 }
 
 export function getCostBreakdown(mealsByDay) {
