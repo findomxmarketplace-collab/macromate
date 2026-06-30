@@ -3,7 +3,6 @@ import mealDb from './data/meals'
 import dessertsDb, { motivationalQuotes, dailyNutritionTips, calculateNutritionScore, getSupermarkets, getDiscountLinks, getCostTier, getMealCost, COUNTRY_OPTIONS } from './data/desserts'
 import { getAllergenKeywords, ALLERGEN_OPTIONS } from './data/allergens'
 import { calculateTargets, generateMeals, swapMeal } from './utils/nutrition'
-import { validateKey } from './utils/license'
 import { downloadPDF } from './components/MealPlanPDF'
 import './App.css'
 
@@ -52,18 +51,6 @@ function QuoteRotator() {
 function App() {
   const [page, setPage] = useState('landing')
   const [step, setStep] = useState(1)
-  const [purchased, setPurchased] = useState(() => {
-    // Check for valid stored license key
-    try {
-      const saved = localStorage.getItem('macromate_license')
-      if (saved) {
-        const result = validateKey(saved)
-        return result.valid
-      }
-    } catch (e) {}
-    return false
-  })
-  const [licenseMsg, setLicenseMsg] = useState('')
   const [form, setForm] = useState({
     age: '', sex: 'Male', weight: '', weightUnit: 'lbs', goal: 'Lose Fat',
     dietType: 'No restrictions', dislikedFoods: '', allergies: '', allergens: [],
@@ -127,15 +114,6 @@ function App() {
       arr[idx] = { ...arr[idx], [field]: val }
       return arr
     })
-  }
-
-  const handleLicenseSubmit = (key) => {
-    const result = validateKey(key)
-    setLicenseMsg(result.valid ? `✅ Key valid! Expires: ${result.expiresFormatted}` : `❌ ${result.reason}`)
-    if (result.valid) {
-      localStorage.setItem('macromate_license', key.trim().toUpperCase())
-      setTimeout(() => setPurchased(true), 600)
-    }
   }
 
   const handleGenerate = useCallback(() => {
@@ -242,8 +220,8 @@ function App() {
   }
   const canProceed = form.age && form.weight
 
-  // ===== PAYWALL LANDING =====
-  if (page === 'landing' && !purchased) {
+  // ===== LANDING (Open Access) =====
+  if (page === 'landing') {
     return (
       <div className="landing">
         <header className="landing-header">
@@ -412,53 +390,6 @@ function App() {
         </section>
         <footer className="landing-footer">
           <div className="container"><p>MacroMate — Not for Resale. © MacroMate</p></div>
-        </footer>
-      </div>
-    )
-  }
-
-  // ===== LANDING (PURCHASED) =====
-  if (page === 'landing' && purchased) {
-    return (
-      <div className="landing">
-        <header className="landing-header">
-          <div className="container">
-            <div className="logo">MacroMate</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <span style={{ fontSize: '0.75rem', color: 'var(--gray-400)', fontWeight: 500 }}>Not for Resale</span>
-              <span className="badge badge-green">✅ Purchased</span>
-              <button className="btn btn-primary" onClick={() => setPage('form')}>Generate My Meal Plan</button>
-            </div>
-          </div>
-        </header>
-        <section className="hero">
-          <div className="container">
-            <div className="hero-badge badge badge-green">Welcome back, MacroMate owner!</div>
-            <h1 className="hero-title">Your Personal AI Meal Plan — <span>Ready in 60 Seconds</span></h1>
-            <button className="btn btn-primary btn-lg hero-cta" onClick={() => setPage('form')}>
-              ✨ Start Your Meal Plan
-            </button>
-            <div className="benefits">
-              <div className="benefit-card">
-                <div className="benefit-icon">🎯</div>
-                <h3>Tailored to Your Goal</h3>
-                <p>Lose fat, build muscle, or maintain — every meal is calibrated.</p>
-              </div>
-              <div className="benefit-card">
-                <div className="benefit-icon">🥗</div>
-                <h3>Diet-Specific Options</h3>
-                <p>6 diets, desserts, swaps, and budget tracking.</p>
-              </div>
-              <div className="benefit-card">
-                <div className="benefit-icon">📊</div>
-                <h3>Interactive & Flexible</h3>
-                <p>Swap meals, adjust calories, log progress, regenerate.</p>
-              </div>
-            </div>
-          </div>
-        </section>
-        <footer className="landing-footer">
-          <div className="container"><p>MacroMate — Not for Resale</p></div>
         </footer>
       </div>
     )
