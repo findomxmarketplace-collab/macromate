@@ -3,6 +3,7 @@ import mealDb from './data/meals'
 import dessertsDb, { motivationalQuotes, dailyNutritionTips, calculateNutritionScore, getSupermarkets, getDiscountLinks, getCostTier, getMealCost, COUNTRY_OPTIONS } from './data/desserts'
 import { getAllergenKeywords, ALLERGEN_OPTIONS } from './data/allergens'
 import { calculateTargets, generateMeals, swapMeal } from './utils/nutrition'
+import { validateKey } from './utils/license'
 import { downloadPDF } from './components/MealPlanPDF'
 import './App.css'
 
@@ -51,7 +52,18 @@ function QuoteRotator() {
 function App() {
   const [page, setPage] = useState('landing')
   const [step, setStep] = useState(1)
-  const [purchased, setPurchased] = useState(() => localStorage.getItem('macromate_purchased') === 'true')
+  const [purchased, setPurchased] = useState(() => {
+    // Check for valid stored license key
+    try {
+      const saved = localStorage.getItem('macromate_license')
+      if (saved) {
+        const result = validateKey(saved)
+        return result.valid
+      }
+    } catch (e) {}
+    return false
+  })
+  const [licenseMsg, setLicenseMsg] = useState('')
   const [form, setForm] = useState({
     age: '', sex: 'Male', weight: '', weightUnit: 'lbs', goal: 'Lose Fat',
     dietType: 'No restrictions', dislikedFoods: '', allergies: '', allergens: [],
@@ -117,13 +129,12 @@ function App() {
     })
   }
 
-  const PAYPAL_URL = "https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=85X6ZA2CZDYH4"
-
-  const handlePurchase = () => {
-    window.open(PAYPAL_URL, '_blank')
-    if (window.confirm('After completing your $4.99 payment on PayPal, click OK to unlock MacroMate instantly.\n\nAlready paid? Click OK to get started!')) {
-      localStorage.setItem('macromate_purchased', 'true')
-      setPurchased(true)
+  const handleLicenseSubmit = (key) => {
+    const result = validateKey(key)
+    setLicenseMsg(result.valid ? `✅ Key valid! Expires: ${result.expiresFormatted}` : `❌ ${result.reason}`)
+    if (result.valid) {
+      localStorage.setItem('macromate_license', key.trim().toUpperCase())
+      setTimeout(() => setPurchased(true), 600)
     }
   }
 
@@ -249,24 +260,28 @@ function App() {
               Science-based 7-day meal plans tailored to your body, goals, diet, and budget.
               Includes desserts, meal swapping, progress tracking, grocery lists, and PDF export.
             </p>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', marginBottom: '3rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
               <div className="price-tag">
                 <span className="price-amount">$4.99</span>
                 <span className="price-label">one-time · unlimited use</span>
               </div>
-              <button className="btn btn-primary btn-lg hero-cta" onClick={handlePurchase}>
-                💳 Buy Now — $4.99
-              </button>
-              <p style={{ fontSize: '0.8rem', color: 'var(--gray-400)' }}>
-                Secure checkout via PayPal · Instant access · No recurring fees
+              <div className="license-entry" style={{ maxWidth: '360px', width: '100%' }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--gray-700)', display: 'block', marginBottom: '0.5rem' }}>Enter Your License Key</label>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <input id="license-input" type="text" placeholder="e.g. MACRO-20270604-0501"
+                    style={{ flex: 1, fontSize: '0.85rem', fontFamily: 'monospace', textTransform: 'uppercase' }}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleLicenseSubmit(e.target.value) }} />
+                  <button className="btn btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+                    onClick={() => {
+                      const input = document.getElementById('license-input')
+                      handleLicenseSubmit(input.value)
+                    }}>Unlock</button>
+                </div>
+                <div id="license-msg" style={{ fontSize: '0.8rem', marginTop: '0.5rem', minHeight: '1.2rem' }}>{licenseMsg}</div>
+              </div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--gray-400)' }}>
+                💳 Purchased through Whop? Your license key is in your confirmation email.
               </p>
-              <p style={{ fontSize: '0.8rem', color: 'var(--gray-400)', marginTop: '0.25rem' }}>
-                ⭐ Trusted by health-conscious users worldwide
-              </p>
-              <a href="#" onClick={(e) => { e.preventDefault(); localStorage.setItem('macromate_purchased', 'true'); setPurchased(true); }}
-                style={{ fontSize: '0.75rem', color: 'var(--gray-300)', textDecoration: 'underline', cursor: 'pointer', marginTop: '0.25rem' }}>
-                Already purchased? Click to unlock (test mode)
-              </a>
             </div>
 
             {/* Free emergency meal teaser */}
@@ -365,9 +380,8 @@ function App() {
                           </div>
                         </div>
                         <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-                          <button className="btn btn-primary btn-lg" onClick={handlePurchase}>
-                            💳 Get Your Personalized Plan — $4.99
-                          </button>
+                          <p style={{ fontSize: '0.9rem', color: 'var(--gray-600)' }}>🔑 Enter your license key above to unlock the full plan</p>
+                          <p style={{ fontSize: '0.75rem', color: 'var(--gray-400)', marginTop: '0.25rem' }}>Purchased through Whop? Your key was sent after purchase.</p>
                         </div>
                       </div>
                     </section>
@@ -391,14 +405,8 @@ function App() {
               <div className="feature-item">✅ One purchase = lifetime access</div>
             </div>
             <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-              <button className="btn btn-primary btn-lg" onClick={handlePurchase}>
-                💳 Buy Now — $4.99
-              </button>
-              <p style={{ fontSize: '0.8rem', color: 'var(--gray-400)', marginTop: '0.5rem' }}>No refunds — all sales final</p>
-              <a href="#" onClick={(e) => { e.preventDefault(); localStorage.setItem('macromate_purchased', 'true'); setPurchased(true); }}
-                style={{ fontSize: '0.75rem', color: 'var(--gray-300)', textDecoration: 'underline', cursor: 'pointer', display: 'block', marginTop: '0.25rem' }}>
-                Already purchased? Click to unlock (test mode)
-              </a>
+              <p style={{ fontSize: '0.95rem', color: 'var(--gray-700)' }}>🔑 Enter your license key at the top of this page to unlock</p>
+              <p style={{ fontSize: '0.75rem', color: 'var(--gray-400)', marginTop: '0.5rem' }}>No refunds — all sales final · One purchase = unlimited access</p>
             </div>
           </div>
         </section>
