@@ -238,65 +238,9 @@ function App() {
               Science-based 7-day meal plans tailored to your body, goals, diet, and budget.
               Includes desserts, meal swapping, progress tracking, grocery lists, and PDF export.
             </p>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-              <div className="price-tag">
-                <span className="price-amount">$4.99</span>
-                <span className="price-label">one-time · unlimited use</span>
-              </div>
-              <div className="license-entry" style={{ maxWidth: '360px', width: '100%' }}>
-                <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--gray-700)', display: 'block', marginBottom: '0.5rem' }}>Enter Your License Key</label>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <input id="license-input" type="text" placeholder="e.g. MACRO-20270604-0501"
-                    style={{ flex: 1, fontSize: '0.85rem', fontFamily: 'monospace', textTransform: 'uppercase' }}
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleLicenseSubmit(e.target.value) }} />
-                  <button className="btn btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
-                    onClick={() => {
-                      const input = document.getElementById('license-input')
-                      handleLicenseSubmit(input.value)
-                    }}>Unlock</button>
-                </div>
-                <div id="license-msg" style={{ fontSize: '0.8rem', marginTop: '0.5rem', minHeight: '1.2rem' }}>{licenseMsg}</div>
-              </div>
-              <p style={{ fontSize: '0.75rem', color: 'var(--gray-400)' }}>
-                💳 Purchased through Whop? Your license key is in your confirmation email.
-              </p>
-            </div>
-
-            {/* Free emergency meal teaser */}
-            <div className="emergency-teaser card" style={{ maxWidth: '500px', margin: '0 auto 3rem', padding: '1.5rem', textAlign: 'center', background: '#fffbeb', border: '1px solid #fde68a' }}>
-              <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>🔥 Emergency Meal</h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--gray-500)', marginBottom: '1rem' }}>Got random ingredients? Type them in and get a recipe idea instantly — free, no purchase needed.</p>
-              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                <input id="emergency-input" placeholder="e.g. chicken, rice, tomato" style={{ flex: 1, fontSize: '0.9rem' }}
-                  onKeyDown={(e) => { if (e.key === 'Enter') {
-                    const val = e.target.value
-                    if (!val) return
-                    const ings = val.split(',').map(i => i.trim()).filter(Boolean)
-                    if (ings.length < 2) return
-                    const found = Object.values(mealDb).flatMap(d => Object.values(d).flat()).filter(m =>
-                      m.ingredients.some(i => ings.some(ing => i.toLowerCase().includes(ing.toLowerCase())))
-                    )
-                    const meal = found.length > 0 ? found[Math.floor(Math.random() * found.length)] : null
-                    const result = document.getElementById('emergency-result')
-                    if (meal && result) {
-                      const cal = Math.round(meal.protein * 4 + meal.carbs * 4 + meal.fat * 9)
-                      result.innerHTML = `<div style="background:var(--green-50);padding:0.75rem;border-radius:8px;margin-top:0.75rem"><strong style="font-size:1rem">${meal.name}</strong><br><span style="font-size:0.8rem;color:var(--gray-500)">${cal} cal · P${meal.protein}g C${meal.carbs}g F${meal.fat}g</span><br><span style="font-size:0.8rem;color:var(--gray-500)">${meal.instructions.substring(0, 80)}...</span><br><span style="font-size:0.75rem;color:var(--gray-400);margin-top:0.5rem;display:block">✨ Want 7 days of this? Get the full plan below 👇</span></div>`
-                    } else if (result) {
-                      result.innerHTML = `<div style="background:#fef2f2;padding:0.75rem;border-radius:8px;margin-top:0.75rem;font-size:0.85rem;color:var(--gray-500)">No exact match found — try different ingredients or <a href="#" onclick="localStorage.setItem('macromate_purchased','true');window.location.reload()" style="color:var(--green-600)">unlock full access</a> for 400+ curated meals!</div>`
-                    }
-                  }}}
-                />
-                <button className="btn btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
-                  onClick={() => {
-                    const input = document.getElementById('emergency-input')
-                    const event = new KeyboardEvent('keydown', { key: 'Enter' })
-                    input.dispatchEvent(event)
-                  }}>Generate</button>
-              </div>
-              <div id="emergency-result"></div>
-              <p style={{ fontSize: '0.7rem', color: 'var(--gray-300)', marginTop: '0.5rem' }}>Free sample — see what MacroMate can do!</p>
-            </div>
-
+            <button className="btn btn-primary btn-lg hero-cta" onClick={() => setPage('form')}>
+              ✨ Start Your Meal Plan
+            </button>
             <div className="benefits">
               <div className="benefit-card">
                 <div className="benefit-icon">🎯</div>
