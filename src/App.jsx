@@ -50,18 +50,11 @@ function QuoteRotator() {
 }
 
 function App() {
-  const [paywallActive, setPaywallActive] = useState(() => {
-    if (typeof window === 'undefined') return false
-    return new URLSearchParams(window.location.search).get('paywall') === 'true'
-  })
+  const [paywallActive, setPaywallActive] = useState(false)
+  const [purchased, setPurchased] = useState(true)
+  const [paywallReady, setPaywallReady] = useState(false)
   const [page, setPage] = useState('landing')
   const [step, setStep] = useState(1)
-  const [purchased, setPurchased] = useState(() => {
-    if (typeof window === 'undefined') return false
-    const hasPaywall = new URLSearchParams(window.location.search).get('paywall') === 'true'
-    if (!hasPaywall) return true
-    return localStorage.getItem('macromate_purchased') === 'true'
-  })
   const [form, setForm] = useState({
     age: '', sex: 'Male', weight: '', weightUnit: 'lbs', goal: 'Lose Fat',
     dietType: 'No restrictions', dislikedFoods: '', allergies: '', allergens: [],
@@ -121,6 +114,17 @@ function App() {
         setForm(prev => ({ ...prev, ...parsed }))
       }
     } catch (e) {}
+    
+    // Detect paywall from URL
+    const hasPaywall = new URLSearchParams(window.location.search).get('paywall') === 'true'
+    console.log('[MacroMate] URL detected:', window.location.href, 'paywall:', hasPaywall)
+    setPaywallActive(hasPaywall)
+    if (!hasPaywall) {
+      setPurchased(true)
+    } else {
+      setPurchased(localStorage.getItem('macromate_purchased') === 'true')
+    }
+    setPaywallReady(true)
   }, [])
   const updatePerson = (idx, field, val) => {
     setPeopleData(prev => {
@@ -233,6 +237,9 @@ function App() {
     }
   }
   const canProceed = form.age && form.weight
+
+  // ===== Wait for URL detection before showing paywall =====
+  if (!paywallReady) return <div className="landing" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}><p style={{ color: 'var(--gray-400)' }}>Loading...</p></div>
 
   // ===== PAYWALL LANDING (only when ?paywall=true) =====
   if (paywallActive && !purchased) {
