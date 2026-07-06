@@ -4,6 +4,7 @@ import dessertsDb, { motivationalQuotes, dailyNutritionTips, calculateNutritionS
 import { getAllergenKeywords, ALLERGEN_OPTIONS } from './data/allergens'
 import { calculateTargets, generateMeals, swapMeal } from './utils/nutrition'
 import { downloadPDF } from './components/MealPlanPDF'
+import { isPaywallEnabled } from './utils/paywall'
 import './App.css'
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -49,11 +50,12 @@ function QuoteRotator() {
 }
 
 function App() {
+  const paywallActive = typeof window !== 'undefined' && 
+    (window.location.href.includes('paywall=true') || window.location.search.includes('paywall=true'))
   const [page, setPage] = useState('landing')
   const [step, setStep] = useState(1)
-  const paywallEnabled = window.location.search.includes('paywall=true')
   const [purchased, setPurchased] = useState(() => {
-    if (!paywallEnabled) return true // open access if no paywall
+    if (!paywallActive) return true
     return localStorage.getItem('macromate_purchased') === 'true'
   })
   const [form, setForm] = useState({
@@ -226,7 +228,7 @@ function App() {
   const canProceed = form.age && form.weight
 
   // ===== PAYWALL LANDING (only when ?paywall=true) =====
-  if (paywallEnabled && !purchased) {
+  if (paywallActive && !purchased) {
     return (
       <div className="landing">
         <header className="landing-header">
