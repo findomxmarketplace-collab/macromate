@@ -4,7 +4,7 @@ import dessertsDb, { motivationalQuotes, dailyNutritionTips, calculateNutritionS
 import { getAllergenKeywords, ALLERGEN_OPTIONS } from './data/allergens'
 import { calculateTargets, generateMeals, swapMeal } from './utils/nutrition'
 import { downloadPDF } from './components/MealPlanPDF'
-import { isPaywallEnabled } from './utils/paywall'
+import { findEmergencyRecipes, findLeftoverIdeas } from './utils/emergencyRecipes'
 import './App.css'
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -50,12 +50,16 @@ function QuoteRotator() {
 }
 
 function App() {
-  const paywallActive = typeof window !== 'undefined' && 
-    (window.location.href.includes('paywall=true') || window.location.search.includes('paywall=true'))
+  const [paywallActive, setPaywallActive] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return new URLSearchParams(window.location.search).get('paywall') === 'true'
+  })
   const [page, setPage] = useState('landing')
   const [step, setStep] = useState(1)
   const [purchased, setPurchased] = useState(() => {
-    if (!paywallActive) return true
+    if (typeof window === 'undefined') return false
+    const hasPaywall = new URLSearchParams(window.location.search).get('paywall') === 'true'
+    if (!hasPaywall) return true
     return localStorage.getItem('macromate_purchased') === 'true'
   })
   const [form, setForm] = useState({
@@ -71,6 +75,10 @@ function App() {
   const [targets, setTargets] = useState(null)
   const [allPersonTargets, setAllPersonTargets] = useState([])
   const [calAdjust, setCalAdjust] = useState(0)
+  const [showEmergency, setShowEmergency] = useState(false)
+  const [emergencyInput, setEmergencyInput] = useState('')
+  const [emergencyResults, setEmergencyResults] = useState([])
+  const [showLeftover, setShowLeftover] = useState(false)
   const planRef = useRef(null)
 
   const updateForm = (k, v) => {
@@ -149,11 +157,10 @@ function App() {
       const personList = [
         { name: 'You', age: parseInt(form.age), sex: form.sex, weight: parseFloat(form.weight), weightUnit: form.weightUnit, goal: form.goal },
         ...peopleData.filter(p => p.age && p.weight).map((p, i) => {
-          const pd = peopleData[i] || {}
           return {
-            name: pd.goal === form.goal ? `Person ${i + 2}` : `Person ${i + 2} (${pd.goal || form.goal})`,
+            name: p.goal === form.goal ? `Person ${i + 2}` : `Person ${i + 2} (${p.goal || form.goal})`,
             age: parseInt(p.age), sex: p.sex, weight: parseFloat(p.weight),
-            weightUnit: form.weightUnit, goal: pd.goal || form.goal,
+            weightUnit: form.weightUnit, goal: p.goal || form.goal,
           }
         })
       ]
@@ -800,6 +807,93 @@ function App() {
               <span style={{ fontSize: '0.85rem', color: 'var(--gray-700)' }}><strong>Pantry Mode active:</strong> Meals prioritized to use ingredients you already have — {form.pantryIngredients}</span>
             </div>
           )}
+
+          {/* Emergency Recipe Generator */}
+          <div className="prep-card card fade-in-up" style={{ borderLeft: '4px solid #ef4444' }}>
+            <h2>🔥 Emergency Recipe Generator</h2>
+            <p className="grocery-note">Type in ingredients you have right now — get instant recipe ideas in seconds!</p>
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
+              <input type="text" placeholder="e.g. chicken, eggs, rice, tomato" value={emergencyInput}
+                onChange={e => setEmergencyInput(e.target.value)}
+                style={{ flex: '1', minWidth: '200px', padding: '0.6rem 0.75rem' }}
+                onKeyDown={e => { if (e.key === 'Enter') { setEmergencyResults(findEmergencyRecipes(emergencyInput)); setShowEmergency(true) }}}
+              />
+              <button className="btn btn-primary" onClick={() => { setEmergencyResults(findEmergencyRecipes(emergencyInput)); setShowEmergency(true) }}>
+                ⚡ Find Recipes
+              </button>
+            </div>
+          </div>
+
+          {/* Emergency Recipe Modal */}
+          {showEmergency && (
+            <div className="modal-overlay" onClick={() => setShowEmergency(false)}
+              style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
+              <div className="card" style={{ maxWidth: '600px', width: '100%', maxHeight: '80vh', overflow: 'auto', padding: '1.5rem' }} onClick={e => e.stopPropagation()}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <h2 style={{ margin: 0 }}>🔥 Quick Recipes</h2>
+                  <button className="btn btn-secondary" onClick={() => setShowEmergency(false)} style={{ padding: '0.3rem 0.75rem' }}>✕ Close</button>
+                </div>
+                {emergencyResults.length === 0 ? (
+                  <p style={{ color: 'var(--gray-500)', fontStyle: 'italic' }}>No recipes found for "{emergencyInput}". Try different ingredients like chicken, eggs, rice, bread, pasta, or beans!</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {emergencyResults.map((recipe, i) => (
+                      <div key={i} className="meal-item" style={{ padding: '1rem', background: '#f9fafb', borderRadius: 'var(--radius-sm)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+                          <h4 style={{ margin: 0, fontSize: '1rem', color: 'var(--green-800)' }}>{recipe.name}</h4>
+                          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                            <span className="prep-badge">⏱️ {recipe.time}</span>
+                            <span className="cost-badge">{recipe.servings || 1} serving{recipe.servings > 1 ? 's' : ''}</span>
+                          </div>
+                        </div>
+                        <div className="meal-macros" style={{ marginBottom: '0.5rem' }}>
+                          <span>{recipe.calories} cal</span>
+                          <span>P {recipe.protein}g</span>
+                          <span>C {recipe.carbs}g</span>
+                          <span>F {recipe.fat}g</span>
+                        </div>
+                        <details className="meal-details">
+                          <summary>Ingredients & Instructions</summary>
+                          <div className="meal-ingredients" style={{ marginTop: '0.5rem' }}>
+                            <strong>Ingredients:</strong>
+                            <ul>{recipe.ingredients.map((ing, j) => <li key={j}>{ing}</li>)}</ul>
+                          </div>
+                          <div className="meal-instructions">
+                            <strong>Instructions:</strong>
+                            <p style={{ marginTop: '0.25rem', lineHeight: 1.6 }}>{recipe.instructions}</p>
+                          </div>
+                        </details>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Leftover Repurposing Ideas */}
+          {(() => {
+            const ideas = findLeftoverIdeas(planData?.mealsByDay || [])
+            return (
+              <div className="prep-card card fade-in-up" style={{ borderLeft: '4px solid #f59e0b' }}>
+                <h2>🥘 Leftover Repurposing Ideas</h2>
+                <p className="grocery-note" style={{ marginBottom: '0.75rem' }}>
+                  Don't let leftovers go to waste! Here's how to turn extra ingredients from this week's meals into new dishes.
+                </p>
+                <div className="prep-tips">
+                  {ideas.map((idea, i) => (
+                    <div key={i} className="prep-tip">
+                      <span className="prep-icon">{['🥘', '🍳', '🥗', '🌮', '🥣'][i % 5]}</span>
+                      <div>
+                        <strong>{idea.from}</strong>
+                        <p className="prep-note">{idea.idea} <span style={{ color: 'var(--gray-500)', fontSize: '0.75rem' }}>({idea.time})</span></p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          })()}
 
           {/* Meal Prep Day Suggestion */}
           <div className="prep-card card fade-in-up">
