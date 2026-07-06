@@ -51,6 +51,11 @@ function QuoteRotator() {
 function App() {
   const [page, setPage] = useState('landing')
   const [step, setStep] = useState(1)
+  const paywallEnabled = window.location.search.includes('paywall=true')
+  const [purchased, setPurchased] = useState(() => {
+    if (!paywallEnabled) return true // open access if no paywall
+    return localStorage.getItem('macromate_purchased') === 'true'
+  })
   const [form, setForm] = useState({
     age: '', sex: 'Male', weight: '', weightUnit: 'lbs', goal: 'Lose Fat',
     dietType: 'No restrictions', dislikedFoods: '', allergies: '', allergens: [],
@@ -219,6 +224,66 @@ function App() {
     }
   }
   const canProceed = form.age && form.weight
+
+  // ===== PAYWALL LANDING (only when ?paywall=true) =====
+  if (paywallEnabled && !purchased) {
+    return (
+      <div className="landing">
+        <header className="landing-header">
+          <div className="container">
+            <div className="logo">MacroMate</div>
+            <span style={{ fontSize: '0.75rem', color: 'var(--gray-400)', fontWeight: 500 }}>Not for Resale</span>
+          </div>
+        </header>
+        <section className="hero">
+          <div className="container">
+            <div className="hero-badge badge badge-green">AI-Powered Meal Planning</div>
+            <h1 className="hero-title">Your Personal AI Meal Plan — <span>Ready in 60 Seconds</span></h1>
+            <p className="hero-subtitle">
+              Science-based 7-day meal plans tailored to your body, goals, diet, and budget.
+              Includes desserts, meal swapping, progress tracking, grocery lists, and PDF export.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem' }}>
+              <div className="price-tag">
+                <span className="price-amount">$4.99</span>
+                <span className="price-label">one-time · unlimited use</span>
+              </div>
+              <button className="btn btn-primary btn-lg hero-cta" onClick={() => {
+                window.open("https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=85X6ZA2CZDYH4", '_blank')
+                if (window.confirm('After completing your $4.99 payment, click OK to unlock MacroMate instantly.')) {
+                  localStorage.setItem('macromate_purchased', 'true')
+                  setPurchased(true)
+                }
+              }}>
+                💳 Buy Now — $4.99
+              </button>
+              <p style={{ fontSize: '0.75rem', color: 'var(--gray-400)' }}>Secure PayPal checkout · Instant access · No recurring fees</p>
+            </div>
+            <div className="benefits">
+              <div className="benefit-card">
+                <div className="benefit-icon">🎯</div>
+                <h3>Tailored to Your Goal</h3>
+                <p>Lose fat, build muscle, or maintain — calibrated using science-based formulas.</p>
+              </div>
+              <div className="benefit-card">
+                <div className="benefit-icon">🥗</div>
+                <h3>6 Diet Types + Desserts</h3>
+                <p>Keto, vegan, paleo, gluten-free, vegetarian, or no restrictions.</p>
+              </div>
+              <div className="benefit-card">
+                <div className="benefit-icon">📊</div>
+                <h3>Interactive & Flexible</h3>
+                <p>Swap meals, adjust calories, set a budget, freezer options, and more.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+        <footer className="landing-footer">
+          <div className="container"><p>MacroMate — Not for Resale. © MacroMate</p></div>
+        </footer>
+      </div>
+    )
+  }
 
   // ===== LANDING (Open Access) =====
   if (page === 'landing') {
@@ -547,7 +612,7 @@ function App() {
                 <h2>Ready to generate your plan</h2>
                 <p className="form-desc">Here's a quick summary — all good?</p>
                 <div className="summary-card">
-                  <div className="summary-row"><span>Age / Sex</span><strong>{form.age} · {form.sex}</strong></div>
+                  <div className="summary-row"><span>Age / Sex</span><strong>{form.age} �� {form.sex}</strong></div>
                   <div className="summary-row"><span>Weight</span><strong>{form.weight} {form.weightUnit}</strong></div>
                   <div className="summary-row"><span>People</span><strong>{form.people}</strong></div>
                   <div className="summary-row"><span>Goal</span><strong>{form.goal}</strong></div>
